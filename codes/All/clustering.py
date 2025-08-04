@@ -1,236 +1,531 @@
+# -------------------- Parameters & Initialization --------------------
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import networkx as nx
+from tqdm import tqdm
+import os
+import time
+from datetime import datetime
+import seaborn as sns
+from matplotlib.patches import Circle
 
-# Parameters
-np.random.seed(42)
-N = 500
-radius = 5000
-fc = 3.5e9
-c = 3e8
-lambda_c = c / fc
-path_loss_exp = 3.5
-shadow_std_db = 8
-noise_power = 1e-9
-total_power = 1.0
-sic_threshold_db = 8
-B_total = 20e6
+# Create timestamped results directory
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+results_dir = f"simulation_results/{timestamp}"
+os.makedirs(results_dir, exist_ok=True)
+os.makedirs("simulation_results", exist_ok=True)
 
-# User Placement
-r = np.sqrt(np.random.uniform(0, radius**2, N))
+print(f"Results will be saved to: {results_dir}")
+
+# Set plotting style
+plt.style.use('seaborn-v0_8')
+sns.set_palette("husl")
+
+# Parameters (Referenced: 3GPP TR 38.901, Chen et al. (2021) IEEE TWC)
+np.random.seed(int(time.time()))
+N, radius = 500, 5000  # Users and cell radius (m)
+fc, c = 3.5e9, 3e8  # Carrier frequency (Hz), Speed of light (m/s)
+lambda_c = c / fc  # Wavelength (m)
+path_loss_exp, shadow_std_db = 3.5, 8  # Urban macrocell [3GPP TR 38.901]
+noise_power, total_power = 1e-9, 1.0  # Noise power and total power budget
+sic_threshold_db, B_total = 8, 20e6  # SIC threshold (dB), Total bandwidth (Hz)
+
+# -------------------- User Placement (Uniform Circular) --------------------
+r = np.sqrt(np.random.uniform(0, radius**2, N))  # Random radius [Chen et al. 2021]
 theta = np.random.uniform(0, 2*np.pi, N)
-x_coords = r * np.cos(theta)
-y_coords = r * np.sin(theta)
+x_coords, y_coords = r * np.cos(theta), r * np.sin(theta)
 
-# Path Loss & Shadowing
+# -------------------- Path Loss & Shadowing (3GPP TR 38.901) --------------------
 pl_1m_db = 20 * np.log10(4 * np.pi / lambda_c)
 shadowing = np.random.normal(0, shadow_std_db, N)
 pl_db = pl_1m_db + 10 * path_loss_exp * np.log10(r) + shadowing
 pl_linear = 10**(-pl_db/10)
 
-# Small-Scale Fading (Rayleigh)
+# -------------------- Small-Scale Rayleigh Fading (Chen et al. 2021) --------------------
 fading = np.random.rayleigh(scale=1.0, size=N)
 
-# Channel Gain
-h_values = fading * np.sqrt(pl_linear)
-h_db = 10*np.log10(h_values**2 + 1e-12)
-h_norm = h_values / np.max(h_values)
+# -------------------- Channel Gain Calculation --------------------
+h_values = fading * np.sqrt(pl_linear)  # [Chen et al. 2021]
+h_db = 10 * np.log10(h_values**2 + 1e-12)
 
-# Saving CSV
-df_h = pd.DataFrame({
-    "User_ID": np.arange(N),
-    "x": x_coords, "y": y_coords,
-    "theta_rad": theta, "distance_m": r,
-    "shadowing_dB": shadowing, "path_loss_dB": pl_db,
-    "fading_rayleigh": fading, "h_linear": h_values,
-    "h_dB": h_db, "h_normalized": h_norm
-})
-df_h.to_csv("h_values_3gpp_uma.csv", index=False)
-print("h values saved to h_values_3gpp_uma.csv")
-
-# Visualizations
-plt.figure(figsize=(8,8))
-plt.scatter(x_coords,y_coords,c=h_norm,cmap='viridis',s=10)
-plt.colorbar(label='Normalized h')
-plt.title("User Distribution with Normalized h")
-plt.grid(); plt.xlabel("X (m)"); plt.ylabel("Y (m)")
-plt.show()
-
-# Clustering Preparations
+# Sorted indices for clustering
 sorted_indices = np.argsort(h_values)
 
-# Rate calculation function
-def calc_pair_rate(h1,h2):
-    P1=total_power*h2/(h1+h2)
-    P2=total_power*h1/(h1+h2)
-    R1=np.log2(1+(P1*h1)/(P2*h1+noise_power))
-    R2=np.log2(1+(P2*h2)/noise_power)
-    return P1,P2,R1,R2,R1+R2
+# Save comprehensive user data including coordinates and channel components
+user_data = pd.DataFrame({
+    "User_ID": np.arange(N),
+    "x_coord_m": x_coords,
+    "y_coord_m": y_coords,
+    "distance_m": r,
+    "angle_rad": theta,
+    "path_loss_dB": pl_db,
+    "path_loss_linear": pl_linear,
+    "shadowing_dB": shadowing,
+    "rayleigh_fading": fading,
+    "h_linear": h_values,
+    "h_dB": h_db
+})
+user_data.to_csv(f"{results_dir}/h_values.csv", index=False)
 
-summary=[]
+# -------------------- Visualization Functions --------------------
+def plot_user_distribution():
+    """Plot user distribution in the cell"""
+    plt.figure(figsize=(10, 8))
+    
+    # Create cell boundary
+    circle = plt.Circle((0, 0), radius, fill=False, color='black', linewidth=2, linestyle='--')
+    plt.gca().add_patch(circle)
+    
+    # Scatter plot of users with color-coded channel gains
+    scatter = plt.scatter(x_coords, y_coords, c=h_db, cmap='viridis', 
+                         s=50, alpha=0.7, edgecolors='black', linewidth=0.5)
+    
+    plt.colorbar(scatter, label='Channel Gain (dB)')
+    plt.xlabel('X Position (m)', fontsize=12)
+    plt.ylabel('Y Position (m)', fontsize=12)
+    plt.title('User Distribution in Cell with Channel Gains', fontsize=14, fontweight='bold')
+    plt.grid(True, alpha=0.3)
+    plt.axis('equal')
+    plt.tight_layout()
+    plt.savefig(f'{results_dir}/user_distribution.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
-# Common save function
-def save_results(data,name):
-    cols=["User1_ID","User2_ID","h1","h2","P1","P2",
-          "R1_bitsHz","R2_bitsHz","R_sum_bitsHz",
-          "Throughput_Mbps","Mode"]
-    pd.DataFrame(data,columns=cols).to_csv(name,index=False)
+def plot_channel_characteristics():
+    """Plot channel gain distributions and characteristics"""
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    
+    # Channel gain histogram
+    ax1.hist(h_db, bins=50, alpha=0.7, color='skyblue', edgecolor='black')
+    ax1.set_xlabel('Channel Gain (dB)')
+    ax1.set_ylabel('Number of Users')
+    ax1.set_title('Channel Gain Distribution')
+    ax1.grid(True, alpha=0.3)
+    
+    # Path loss vs distance
+    ax2.scatter(r, pl_db, alpha=0.6, color='orange', s=30)
+    ax2.set_xlabel('Distance from BS (m)')
+    ax2.set_ylabel('Path Loss (dB)')
+    ax2.set_title('Path Loss vs Distance')
+    ax2.grid(True, alpha=0.3)
+    
+    # Fading distribution
+    ax3.hist(fading, bins=50, alpha=0.7, color='lightgreen', edgecolor='black')
+    ax3.set_xlabel('Rayleigh Fading Coefficient')
+    ax3.set_ylabel('Number of Users')
+    ax3.set_title('Rayleigh Fading Distribution')
+    ax3.grid(True, alpha=0.3)
+    
+    # Sorted channel gains
+    ax4.plot(range(N), np.sort(h_db), linewidth=2, color='red')
+    ax4.set_xlabel('User Index (Sorted)')
+    ax4.set_ylabel('Channel Gain (dB)')
+    ax4.set_title('Sorted Channel Gains')
+    ax4.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(f'{results_dir}/channel_characteristics.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
-# Static Pairing
-static_pairs=[]; static_data=[]; used_static=np.zeros(N,bool)
-for i in range(N//2):
-    u1,u2=sorted_indices[i],sorted_indices[N-1-i]
-    h1,h2=h_values[u1],h_values[u2]
-    if 10*np.log10(h2/h1)>=sic_threshold_db:
-        P1,P2,R1,R2,Rsum=calc_pair_rate(h1,h2)
-        static_pairs.append((u1,u2)); used_static[[u1,u2]]=True
+def plot_pairing_visualization(pairs_indices, name, clustering_data):
+    """Visualize user pairing for each clustering method"""
+    plt.figure(figsize=(12, 10))
+    
+    # Create cell boundary
+    circle = plt.Circle((0, 0), radius, fill=False, color='black', linewidth=2, linestyle='--')
+    plt.gca().add_patch(circle)
+    
+    # Plot all users
+    plt.scatter(x_coords, y_coords, c='lightgray', s=30, alpha=0.5, label='Unpaired Users')
+    
+    # Plot NOMA pairs with lines
+    colors = plt.cm.Set3(np.linspace(0, 1, len(pairs_indices)))
+    
+    for idx, (u1, u2) in enumerate(pairs_indices):
+        h1, h2 = h_values[u1], h_values[u2]
+        if sic_satisfied(min(h1, h2), max(h1, h2)):
+            plt.plot([x_coords[u1], x_coords[u2]], [y_coords[u1], y_coords[u2]], 
+                    color=colors[idx], linewidth=1.5, alpha=0.7)
+            plt.scatter([x_coords[u1], x_coords[u2]], [y_coords[u1], y_coords[u2]], 
+                       c=[colors[idx]], s=50, edgecolors='black', linewidth=0.5)
+    
+    plt.xlabel('X Position (m)', fontsize=12)
+    plt.ylabel('Y Position (m)', fontsize=12)
+    plt.title(f'{name.title()} Clustering - User Pairing Visualization', fontsize=14, fontweight='bold')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.axis('equal')
+    plt.tight_layout()
+    plt.savefig(f'{results_dir}/{name}_pairing.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
-num_pairs_static=len(static_pairs)
-num_oma_static=N-2*num_pairs_static
-B_pair=B_total/(num_pairs_static+num_oma_static)
+def plot_channel_components_analysis():
+    """Plot detailed analysis of individual channel components"""
+    # Load the comprehensive user data
+    user_data = pd.DataFrame({
+        "User_ID": np.arange(N),
+        "x_coord_m": x_coords,
+        "y_coord_m": y_coords,
+        "distance_m": r,
+        "angle_rad": theta,
+        "path_loss_dB": pl_db,
+        "path_loss_linear": pl_linear,
+        "shadowing_dB": shadowing,
+        "rayleigh_fading": fading,
+        "h_linear": h_values,
+        "h_dB": h_db
+    })
+    
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    
+    # Distance vs Path Loss (showing path loss model)
+    ax1.scatter(user_data['distance_m'], user_data['path_loss_dB'], alpha=0.6, s=20, color='red')
+    # Add theoretical path loss line
+    dist_theory = np.linspace(100, radius, 100)
+    pl_theory = pl_1m_db + 10 * path_loss_exp * np.log10(dist_theory)
+    ax1.plot(dist_theory, pl_theory, 'k--', linewidth=2, label='Theoretical Path Loss')
+    ax1.set_xlabel('Distance from BS (m)')
+    ax1.set_ylabel('Path Loss (dB)')
+    ax1.set_title('Path Loss vs Distance (3GPP Model)')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    
+    # Spatial distribution of shadowing
+    scatter2 = ax2.scatter(user_data['x_coord_m'], user_data['y_coord_m'], 
+                          c=user_data['shadowing_dB'], cmap='RdBu_r', s=30, alpha=0.7)
+    circle2 = plt.Circle((0, 0), radius, fill=False, color='black', linewidth=2, linestyle='--')
+    ax2.add_patch(circle2)
+    plt.colorbar(scatter2, ax=ax2, label='Shadowing (dB)')
+    ax2.set_xlabel('X Position (m)')
+    ax2.set_ylabel('Y Position (m)')
+    ax2.set_title('Spatial Distribution of Shadowing Effects')
+    ax2.axis('equal')
+    ax2.grid(True, alpha=0.3)
+    
+    # Channel gain components comparison
+    components = ['Path Loss', 'Shadowing', 'Rayleigh Fading', 'Overall Channel']
+    # Convert to dB for comparison
+    pl_contribution = user_data['path_loss_dB']
+    shadowing_contribution = user_data['shadowing_dB'] 
+    fading_contribution = 20 * np.log10(user_data['rayleigh_fading'])  # Convert to dB
+    overall_gain = user_data['h_dB']
+    
+    ax3.boxplot([pl_contribution, shadowing_contribution, fading_contribution, overall_gain],
+                labels=components)
+    ax3.set_ylabel('Magnitude (dB)')
+    ax3.set_title('Channel Component Contributions')
+    ax3.grid(True, alpha=0.3)
+    plt.setp(ax3.get_xticklabels(), rotation=45, ha='right')
+    
+    # Distance vs Overall Channel Gain (showing combined effect)
+    ax4.scatter(user_data['distance_m'], user_data['h_dB'], alpha=0.6, s=20, color='green')
+    ax4.set_xlabel('Distance from BS (m)')
+    ax4.set_ylabel('Overall Channel Gain (dB)')
+    ax4.set_title('Distance vs Overall Channel Gain')
+    ax4.grid(True, alpha=0.3)
+    
+    # Add statistics text
+    stats_text = f"""
+    Statistics:
+    Mean distance: {user_data['distance_m'].mean():.0f} m
+    Mean path loss: {user_data['path_loss_dB'].mean():.1f} dB
+    Shadowing std: {user_data['shadowing_dB'].std():.1f} dB
+    Channel gain range: {user_data['h_dB'].min():.1f} to {user_data['h_dB'].max():.1f} dB
+    """
+    ax4.text(0.02, 0.98, stats_text, transform=ax4.transAxes, fontsize=9,
+             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    
+    plt.tight_layout()
+    plt.savefig(f'{results_dir}/channel_components_analysis.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
-for u1,u2 in static_pairs:
-    h1,h2=h_values[u1],h_values[u2]
-    P1,P2,R1,R2,Rsum=calc_pair_rate(h1,h2)
-    throughput=Rsum*B_pair/1e6
-    static_data.append([u1,u2,h1,h2,P1,P2,R1,R2,Rsum,throughput,"NOMA"])
+def plot_user_positioning_analysis():
+    """Plot analysis of user positioning and spatial characteristics"""
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    
+    # Radial distribution
+    ax1.hist(r, bins=50, alpha=0.7, color='skyblue', edgecolor='black')
+    ax1.set_xlabel('Distance from BS (m)')
+    ax1.set_ylabel('Number of Users')
+    ax1.set_title('Radial Distribution of Users')
+    ax1.grid(True, alpha=0.3)
+    
+    # Angular distribution
+    ax2.hist(theta, bins=50, alpha=0.7, color='lightgreen', edgecolor='black')
+    ax2.set_xlabel('Angle (radians)')
+    ax2.set_ylabel('Number of Users')
+    ax2.set_title('Angular Distribution of Users')
+    ax2.grid(True, alpha=0.3)
+    
+    # Polar plot of user positions
+    ax3 = plt.subplot(2, 2, 3, projection='polar')
+    scatter3 = ax3.scatter(theta, r, c=h_db, cmap='viridis', s=20, alpha=0.7)
+    ax3.set_title('Polar View of User Distribution\n(Color = Channel Gain)')
+    plt.colorbar(scatter3, ax=ax3, label='Channel Gain (dB)', shrink=0.8)
+    
+    # Distance vs angle with channel quality
+    scatter4 = ax4.scatter(theta * 180/np.pi, r, c=h_db, cmap='viridis', s=30, alpha=0.7)
+    ax4.set_xlabel('Angle (degrees)')
+    ax4.set_ylabel('Distance from BS (m)')
+    ax4.set_title('User Positions (Angle vs Distance)')
+    plt.colorbar(scatter4, ax=ax4, label='Channel Gain (dB)')
+    ax4.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(f'{results_dir}/user_positioning_analysis.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
-for u in range(N):
-    if not used_static[u]:
-        h=h_values[u];R1=np.log2(1+total_power*h/noise_power)
-        throughput=R1*B_pair/1e6
-        static_data.append([u,-1,h,0,total_power,0,R1,0,R1,throughput,"OMA"])
-        
-save_results(static_data,"static_clustering.csv")
+def plot_clustering_comparison():
+    """Compare performance of different clustering methods"""
+    # Read results from CSV files
+    methods = ['static', 'balanced', 'blossom']
+    results = {}
+    
+    for method in methods:
+        try:
+            df = pd.read_csv(f'{results_dir}/{method}_clustering.csv')
+            noma_pairs = df[df['Mode'] == 'NOMA']
+            oma_users = df[df['Mode'] == 'OMA']
+            
+            results[method] = {
+                'total_throughput': df['Throughput_Mbps'].sum(),
+                'noma_pairs': len(noma_pairs),
+                'oma_users': len(oma_users),
+                'avg_noma_rate': noma_pairs['R_sum_bitsHz'].mean() if len(noma_pairs) > 0 else 0,
+                'avg_oma_rate': oma_users['R_sum_bitsHz'].mean() if len(oma_users) > 0 else 0
+            }
+        except FileNotFoundError:
+            continue
+    
+    if not results:
+        return
+    
+    # Create comparison plots
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+    
+    # Total throughput comparison
+    methods_list = list(results.keys())
+    throughputs = [results[m]['total_throughput'] for m in methods_list]
+    bars1 = ax1.bar(methods_list, throughputs, color=['skyblue', 'lightgreen', 'orange'])
+    ax1.set_ylabel('Total Throughput (Mbps)')
+    ax1.set_title('Total System Throughput Comparison')
+    ax1.grid(True, alpha=0.3)
+    
+    # Add value labels on bars
+    for bar, value in zip(bars1, throughputs):
+        ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(throughputs)*0.01,
+                f'{value:.1f}', ha='center', va='bottom', fontweight='bold')
+    
+    # NOMA vs OMA distribution
+    noma_counts = [results[m]['noma_pairs'] for m in methods_list]
+    oma_counts = [results[m]['oma_users'] for m in methods_list]
+    
+    x = np.arange(len(methods_list))
+    width = 0.35
+    
+    bars2 = ax2.bar(x - width/2, noma_counts, width, label='NOMA Pairs', color='coral')
+    bars3 = ax2.bar(x + width/2, oma_counts, width, label='OMA Users', color='lightblue')
+    
+    ax2.set_xlabel('Clustering Method')
+    ax2.set_ylabel('Number of Users/Pairs')
+    ax2.set_title('NOMA vs OMA User Distribution')
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(methods_list)
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    
+    # Average rates comparison
+    avg_noma_rates = [results[m]['avg_noma_rate'] for m in methods_list]
+    avg_oma_rates = [results[m]['avg_oma_rate'] for m in methods_list]
+    
+    bars4 = ax3.bar(x - width/2, avg_noma_rates, width, label='Avg NOMA Rate', color='mediumseagreen')
+    bars5 = ax3.bar(x + width/2, avg_oma_rates, width, label='Avg OMA Rate', color='plum')
+    
+    ax3.set_xlabel('Clustering Method')
+    ax3.set_ylabel('Average Rate (bits/Hz)')
+    ax3.set_title('Average Data Rates Comparison')
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(methods_list)
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+    
+    # Performance summary pie chart
+    method_colors = ['skyblue', 'lightgreen', 'orange']
+    ax4.pie(throughputs, labels=methods_list, colors=method_colors, autopct='%1.1f%%', startangle=90)
+    ax4.set_title('Throughput Share by Method')
+    
+    plt.tight_layout()
+    plt.savefig(f'{results_dir}/clustering_comparison.png', dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # Save summary statistics
+    summary_data = []
+    for method in methods_list:
+        summary_data.append({
+            'Method': method.title(),
+            'Total_Throughput_Mbps': results[method]['total_throughput'],
+            'NOMA_Pairs': results[method]['noma_pairs'],
+            'OMA_Users': results[method]['oma_users'],
+            'Avg_NOMA_Rate_bitsHz': results[method]['avg_noma_rate'],
+            'Avg_OMA_Rate_bitsHz': results[method]['avg_oma_rate'],
+            'NOMA_Percentage': (results[method]['noma_pairs'] * 2) / N * 100
+        })
+    
+    pd.DataFrame(summary_data).to_csv(f'{results_dir}/clustering_summary.csv', index=False)
 
-# Visualization of Static Pairing
-plt.figure(figsize=(8,8))
-for u1,u2 in static_pairs:
-    plt.plot([x_coords[u1],x_coords[u2]],
-             [y_coords[u1],y_coords[u2]],'b-',linewidth=0.5)
-plt.scatter(x_coords[~used_static],y_coords[~used_static],c='red',s=5)
-plt.title("Static Pairing"); plt.grid(); plt.show()
+# -------------------- SIC Rate Calculation --------------------
+def calc_pair_rate(h1, h2):
+    P1, P2 = total_power * h2 / (h1 + h2), total_power * h1 / (h1 + h2)
+    R1 = np.log2(1 + (P1 * h1) / (P2 * h1 + noise_power))
+    R2 = np.log2(1 + (P2 * h2) / noise_power)
+    return P1, P2, R1, R2, R1 + R2
 
-# (Balanced & Blossom clustering implementations follow similarly...)
+# -------------------- SIC Condition Check --------------------
+def sic_satisfied(h1, h2):
+    return 10 * np.log10(h2 / h1) >= sic_threshold_db
 
-print("Integration complete, CSVs & plots saved.")
+# -------------------- Clustering Common Function --------------------
+def perform_clustering(pairs_indices, name):
+    """
+    Perform clustering with given pair indices and save results with visualizations
+    
+    Args:
+        pairs_indices: List of tuples representing user pairs
+        name: String identifier for the clustering method
+    
+    Returns:
+        Dictionary containing performance metrics
+    """
+    data, used = [], np.zeros(N, bool)
+    total_rate = 0
+    noma_pairs_count = 0
 
-# ===================== Method 2: Balanced Pairing =====================
-pairs_balanced = []
-balanced_data = []
-used_balanced = np.zeros(N, dtype=bool)
-total_rate_balanced = 0
-total_throughput_balanced = 0
+    print(f"\n--- {name.title()} Clustering ---")
+    print(f"Evaluating {len(pairs_indices)} potential pairs...")
+    
+    for u1, u2 in tqdm(pairs_indices, desc=f"Processing {name} pairs"):
+        h1, h2 = h_values[u1], h_values[u2]
+        if sic_satisfied(min(h1, h2), max(h1, h2)):
+            P1, P2, R1, R2, R_sum = calc_pair_rate(min(h1, h2), max(h1, h2))
+            used[[u1, u2]] = True
+            data.append([u1, u2, h1, h2, P1, P2, R1, R2, R_sum, "NOMA"])
+            total_rate += R_sum
+            noma_pairs_count += 1
 
-for i in range(N // 2):
-    u1, u2 = sorted_indices[i], sorted_indices[i + N // 2]
-    h1, h2 = h_values[u1], h_values[u2]
-    delta_db = 10 * np.log10(h2 / h1)
-    if delta_db >= sic_threshold_db:
-        P1, P2, R1, R2, R_sum = calc_pair_rate(h1, h2)
-        pairs_balanced.append((u1, u2))
-        total_rate_balanced += R_sum
-        used_balanced[u1] = used_balanced[u2] = True
+    num_pairs, num_oma = len(data), N - 2 * len(data)
+    B_pair = B_total / (num_pairs + num_oma)
+    throughput_total = 0
 
-num_pairs_balanced = len(pairs_balanced)
-num_oma_balanced = N - 2 * num_pairs_balanced
-B_pair = B_total / (num_pairs_balanced + num_oma_balanced)
+    # Calculate throughput for NOMA pairs
+    for row in data:
+        row.append(row[8] * B_pair / 1e6)
+        throughput_total += row[-1]
 
-# Fill NOMA pairs
-for u1, u2 in pairs_balanced:
-    h1, h2 = h_values[u1], h_values[u2]
-    P1, P2, R1, R2, R_sum = calc_pair_rate(h1, h2)
-    throughput = R_sum * B_pair / 1e6
-    total_throughput_balanced += throughput
-    balanced_data.append([u1, u2, h1, h2, P1, P2, R1, R2, R_sum, throughput, "NOMA"])
+    # Handle remaining OMA users
+    oma_users_count = 0
+    for u in range(N):
+        if not used[u]:
+            h = h_values[u]
+            R1_oma = np.log2(1 + total_power * h / noise_power)
+            throughput = R1_oma * B_pair / 1e6
+            throughput_total += throughput
+            data.append([u, -1, h, 0, total_power, 0, R1_oma, 0, R1_oma, "OMA", throughput])
+            oma_users_count += 1
 
-# OMA fallback
-for u in range(N):
-    if not used_balanced[u]:
-        h = h_values[u]
-        R1_oma = np.log2(1 + (total_power * h) / noise_power)
-        throughput = R1_oma * B_pair / 1e6
-        total_throughput_balanced += throughput
-        balanced_data.append([u, -1, h, 0, total_power, 0, R1_oma, 0, R1_oma, throughput, "OMA"])
+    # Save results
+    save_name = f"{results_dir}/{name}_clustering.csv"
+    cols = ["User1_ID", "User2_ID", "h1", "h2", "P1", "P2", "R1_bitsHz", "R2_bitsHz", "R_sum_bitsHz", "Mode", "Throughput_Mbps"]
+    pd.DataFrame(data, columns=cols).to_csv(save_name, index=False)
+    
+    # Print performance summary
+    print(f"NOMA Pairs: {noma_pairs_count}")
+    print(f"OMA Users: {oma_users_count}")
+    print(f"Total Throughput: {throughput_total:.2f} Mbps")
+    print(f"NOMA Coverage: {(noma_pairs_count * 2)/N*100:.1f}%")
+    
+    # Generate pairing visualization
+    plot_pairing_visualization(pairs_indices, name, data)
+    
+    return {
+        'noma_pairs': noma_pairs_count,
+        'oma_users': oma_users_count,
+        'total_throughput': throughput_total,
+        'noma_coverage': (noma_pairs_count * 2)/N*100
+    }
 
-avg_pair_rate_balanced = total_rate_balanced / (num_pairs_balanced + num_oma_balanced)
-avg_user_rate_balanced = total_rate_balanced / N
-summary.append(["Balanced", num_pairs_balanced, num_oma_balanced, total_rate_balanced, avg_pair_rate_balanced, avg_user_rate_balanced, total_throughput_balanced])
-save_results(balanced_data, "balanced_clustering.csv")
+# -------------------- Main Execution with Visualizations --------------------
+print("="*60)
+print("NOMA CLUSTERING SIMULATION AND ANALYSIS")
+print("="*60)
+print(f"System Parameters:")
+print(f"- Number of Users: {N}")
+print(f"- Cell Radius: {radius} m")
+print(f"- Carrier Frequency: {fc/1e9:.1f} GHz")
+print(f"- SIC Threshold: {sic_threshold_db} dB")
+print(f"- Total Bandwidth: {B_total/1e6:.0f} MHz")
 
-# Plot Balanced
-plt.figure(figsize=(10, 10))
-plt.scatter(x_coords, y_coords, s=1, color='gray')
-for u1, u2 in pairs_balanced:
-    plt.plot([x_coords[u1], x_coords[u2]], [y_coords[u1], y_coords[u2]], 'g-', alpha=0.6, linewidth=0.5)
-plt.plot(x_coords[~used_balanced], y_coords[~used_balanced], 'ro', markersize=2)
-plt.scatter(0, 0, c='black', marker='x', s=100)
-plt.title(f"Balanced Pairing: Noma_Pairs:{num_pairs_balanced} OMA_Users:{num_oma_balanced} Total Throughput={total_throughput_balanced:.2f} Mbps")
-plt.axis('equal'); plt.grid(True); plt.tight_layout(); plt.show()
+# Generate initial visualizations
+print("\nGenerating channel analysis plots...")
+plot_user_distribution()
+plot_channel_characteristics()
+plot_channel_components_analysis()
+plot_user_positioning_analysis()
 
-# ===================== Method 3: Blossom Pairing =====================
+# Store results for comparison
+clustering_results = {}
+
+# -------------------- Static Clustering --------------------
+print("\n" + "="*50)
+static_indices = [(sorted_indices[i], sorted_indices[N-1-i]) for i in range(N//2)]
+clustering_results['static'] = perform_clustering(static_indices, "static")
+
+# -------------------- Balanced Clustering --------------------
+print("\n" + "="*50)
+balanced_indices = [(sorted_indices[i], sorted_indices[i + N//2]) for i in range(N//2)]
+clustering_results['balanced'] = perform_clustering(balanced_indices, "balanced")
+
+# -------------------- Blossom Clustering --------------------
+print("\n" + "="*50)
+print("Blossom Clustering")
+print("Building maximum weight matching graph...")
 G = nx.Graph()
-for i in range(N):
-    for j in range(i + 1, N):
-        h1, h2 = sorted([h_values[i], h_values[j]])
-        delta_db = 10 * np.log10(h2 / h1)
-        if delta_db >= sic_threshold_db:
-            _, _, _, _, R_sum = calc_pair_rate(h1, h2)
+edge_count = 0
+
+for i in tqdm(range(N), desc="Building graph"):
+    for j in range(i+1, N):
+        if sic_satisfied(min(h_values[i], h_values[j]), max(h_values[i], h_values[j])):
+            _, _, _, _, R_sum = calc_pair_rate(min(h_values[i], h_values[j]), max(h_values[i], h_values[j]))
             G.add_edge(i, j, weight=R_sum)
+            edge_count += 1
 
-matches_blossom = list(nx.max_weight_matching(G, maxcardinality=True))
-pairs_blossom = []
-blossom_data = []
-used_blossom = np.zeros(N, dtype=bool)
-total_rate_blossom = 0
-total_throughput_blossom = 0
+print(f"Graph created with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges")
 
-for u1, u2 in matches_blossom:
-    h1, h2 = h_values[u1], h_values[u2]
-    P1, P2, R1, R2, R_sum = calc_pair_rate(min(h1, h2), max(h1, h2))
-    pairs_blossom.append((u1, u2))
-    total_rate_blossom += R_sum
-    used_blossom[u1] = used_blossom[u2] = True
+blossom_indices = list(nx.max_weight_matching(G, maxcardinality=True))
+clustering_results['blossom'] = perform_clustering(blossom_indices, "blossom")
 
-num_pairs_blossom = len(pairs_blossom)
-num_oma_blossom = N - 2 * num_pairs_blossom
-B_pair = B_total / (num_pairs_blossom + num_oma_blossom)
+# -------------------- Generate Comparison Plots --------------------
+print("\n" + "="*50)
+print("Generating comparison analysis...")
+plot_clustering_comparison()
 
-# Fill NOMA pairs
-for u1, u2 in pairs_blossom:
-    h1, h2 = h_values[u1], h_values[u2]
-    P1, P2, R1, R2, R_sum = calc_pair_rate(min(h1, h2), max(h1, h2))
-    throughput = R_sum * B_pair / 1e6
-    total_throughput_blossom += throughput
-    blossom_data.append([u1, u2, min(h1, h2), max(h1, h2), P1, P2, R1, R2, R_sum, throughput, "NOMA"])
+# -------------------- Final Summary --------------------
+print("\n" + "="*60)
+print("SIMULATION SUMMARY")
+print("="*60)
 
-# OMA fallback
-for u in range(N):
-    if not used_blossom[u]:
-        h = h_values[u]
-        R1_oma = np.log2(1 + (total_power * h) / noise_power)
-        throughput = R1_oma * B_pair / 1e6
-        total_throughput_blossom += throughput
-        blossom_data.append([u, -1, h, 0, total_power, 0, R1_oma, 0, R1_oma, throughput, "OMA"])
+for method, results in clustering_results.items():
+    print(f"\n{method.upper()} CLUSTERING:")
+    print(f"  - NOMA Pairs: {results['noma_pairs']}")
+    print(f"  - OMA Users: {results['oma_users']}")
+    print(f"  - Total Throughput: {results['total_throughput']:.2f} Mbps")
+    print(f"  - NOMA Coverage: {results['noma_coverage']:.1f}%")
 
-avg_pair_rate_blossom = total_rate_blossom / (num_pairs_blossom + num_oma_blossom)
-avg_user_rate_blossom = total_rate_blossom / N
-summary.append(["Blossom", num_pairs_blossom, num_oma_blossom, total_rate_blossom, avg_pair_rate_blossom, avg_user_rate_blossom, total_throughput_blossom])
-save_results(blossom_data, "blossom_clustering.csv")
+# Find best performing method
+best_method = max(clustering_results.keys(), 
+                 key=lambda x: clustering_results[x]['total_throughput'])
+print(f"\nBEST PERFORMING METHOD: {best_method.upper()}")
+print(f"Throughput: {clustering_results[best_method]['total_throughput']:.2f} Mbps")
 
-# Plot Blossom
-plt.figure(figsize=(10, 10))
-plt.scatter(x_coords, y_coords, s=1, color='gray')
-for u1, u2 in pairs_blossom:
-    plt.plot([x_coords[u1], x_coords[u2]], [y_coords[u1], y_coords[u2]], 'purple', alpha=0.6, linewidth=0.5)
-plt.plot(x_coords[~used_blossom], y_coords[~used_blossom], 'ro', markersize=2)
-plt.scatter(0, 0, c='black', marker='x', s=100)
-plt.title(f"Blossom Pairing: Noma_Pairs:{num_pairs_blossom} OMA_Users:{num_oma_blossom} Total Throughput={total_throughput_blossom:.2f} Mbps")
-plt.axis('equal'); plt.grid(True); plt.tight_layout(); plt.show()
-
-# ===================== Summary Table =====================
-df_summary = pd.DataFrame(summary, columns=["Method", "NOMA Pairs", "OMA Users", "Total Rate (bits/s/Hz)", "Avg Pair Rate (bits/s/Hz)", "Avg User Rate (bits/s/Hz)", "Total Throughput (Mbps)"])
-print("\nComparison of Clustering Methods:")
-print(df_summary)
-df_summary.to_csv("clustering_summary.csv", index=False)
+print(f"\nAll results and visualizations saved to '{results_dir}/' directory")
+print("Simulation completed successfully!")
+print("="*60)
