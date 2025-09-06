@@ -1,0 +1,28 @@
+# Model Configuration
+model:
+  input_dim: 10  # Number of input features
+  hidden_dim: 64  # Number of hidden units
+  output_dim: 1   # Number of output values
+  
+# Training Configuration
+training:
+  batch_size: 32
+  learning_rate: 0.001
+  num_epochs: 100
+  
+# Data Configuration
+data:
+  data_dir: "data/processed"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  
+# Save Configuration
+save:
+  model_dir: "models/saved"
+  log_dir: "logs"
+  
+# Transforms
+transforms:
+  normalize: true
+  augment: false
