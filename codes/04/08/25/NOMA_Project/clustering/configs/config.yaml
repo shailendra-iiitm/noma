@@ -1,0 +1,15 @@
+system:
+  num_users: 1100
+  radius: 5000  # Cell radius in meters
+  h_BS: 25     # Base station height in meters
+  seed: 42     # Random seed
+
+channel:
+  fc: 3.5e9    # Carrier frequency in Hz
+  shadow_std_db: 8.0  # Shadowing standard deviation in dB
+
+pairing:
+  noise_power: 1.0e-9
+  total_power: 1.0
+  sic_threshold_db: 8.0
+  B_total: 20.0e6  # Total bandwidth in Hz
