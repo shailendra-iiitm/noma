@@ -1,0 +1,54 @@
+import numpy as np
+import networkx as nx
+
+# Example h values
+h_vals = {
+    "U1": 1,
+    "U2": 3,
+    "U3": 5,
+    "U4": 7,
+    "U5": 10
+}
+
+# Parameters
+noise_power = 1e-9
+total_power = 1.0
+sic_threshold_db = 3  # example threshold
+
+users = list(h_vals.keys())
+pairs_data = []
+
+# Step 1: Compute ΔdB, power allocation, rates
+for i in range(len(users)):
+    for j in range(i + 1, len(users)):
+        u1, u2 = users[i], users[j]
+        h1, h2 = sorted([h_vals[u1], h_vals[u2]])
+        delta_db = 10 * np.log10(h2 / h1)
+
+        if delta_db >= sic_threshold_db:  # SIC feasibility check
+            P1 = total_power * h2 / (h1 + h2)
+            P2 = total_power * h1 / (h1 + h2)
+            R1 = np.log2(1 + (P1 * h1) / (P2 * h1 + noise_power))
+            R2 = np.log2(1 + (P2 * h2) / noise_power)
+            R_sum = R1 + R2
+            pairs_data.append((u1, u2, h1, h2, round(delta_db, 2), round(P1, 3), round(P2, 3), round(R1, 3), round(R2, 3), round(R_sum, 3)))
+
+# Step 2: Display feasible pairs
+print("Feasible Pairs (SIC Threshold = 3 dB):")
+print("Pair   h1    h2   ΔdB   P1     P2     R1     R2     R_sum")
+for p in pairs_data:
+    print(f"{p[0]}-{p[1]}  {p[2]:<5} {p[3]:<5} {p[4]:<5} {p[5]:<5} {p[6]:<5} {p[7]:<5} {p[8]:<5} {p[9]:<5}")
+
+# Step 3: Build graph for Blossom matching
+G = nx.Graph()
+for p in pairs_data:
+    u1, u2, _, _, _, _, _, _, _, R_sum = p
+    G.add_edge(u1, u2, weight=R_sum)
+
+# Step 4: Blossom matching
+matches = list(nx.max_weight_matching(G, maxcardinality=True))
+total_blossom_rate = sum(G[u][v]['weight'] for u, v in matches)
+
+print("\nBlossom Matching Result:")
+print(matches)
+print(f"Total Blossom Sum-Rate: {total_blossom_rate:.3f} bits/s/Hz")
