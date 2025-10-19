@@ -1,0 +1,247 @@
+\chapter{Implementation Details}
+\label{chap:implementation}
+
+This chapter describes the software implementation, directory structure, and development workflow.
+
+\section{Software Architecture}
+
+\subsection{Directory Structure}
+
+\begin{lstlisting}[language=bash]
+noma_gnn_backup/
+├── config.py                  # Global configuration
+├── requirements.txt           # Python dependencies
+├── data/
+│   ├── dataset.py            # PyTorch Geometric dataset
+│   ├── normalization.py      # Feature scaling
+│   ├── raw/                  # CSV channel data
+│   └── processed/            # Processed graphs
+├── models/
+│   └── pairpower_gnn.py      # NOMA-GNN architecture
+├── training/
+│   ├── train.py              # Training loop
+│   └── losses.py             # Multi-task loss
+├── inference/
+│   └── infer_pairing.py      # Real-time inference
+├── scripts/
+│   ├── prepare_data.py       # Dataset generation
+│   └── verify_sic_pairs.py   # SIC validation
+├── utils/
+│   ├── matching.py           # Greedy matching
+│   └── metrics.py            # Evaluation metrics
+└── checkpoints/
+    └── best_model.pt         # Trained weights
+\end{lstlisting}
+
+\subsection{Technology Stack}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Technology} \\
+\midrule
+Language & Python 3.9 \\
+Deep Learning & PyTorch 1.13 \\
+Graph Processing & PyTorch Geometric 2.2 \\
+Numerical Computing & NumPy 1.23, SciPy 1.9 \\
+Graph Algorithms & NetworkX 2.8 \\
+Visualization & Matplotlib 3.6, Seaborn 0.12 \\
+Progress Tracking & tqdm 4.64 \\
+Hardware & NVIDIA RTX 3060 (6GB) \\
+OS & Ubuntu 20.04 / Windows 10 \\
+\bottomrule
+\end{tabular}
+\caption{Software Stack}
+\end{table}
+
+\section{Key Modules}
+
+\subsection{Dataset Generation (scripts/prepare_data.py)}
+
+Generates 3GPP-compliant channel realizations and constructs graph datasets.
+
+\textbf{Key Functions:}
+\begin{itemize}
+    \item \texttt{generate_uma_channels()}: Implements 3GPP UMa model
+    \item \texttt{construct_candidate_graph()}: Builds edge list with constraints
+    \item \texttt{compute_ground_truth()}: Runs Blossom for labels
+    \item \texttt{save_to_csv()}: Exports dataset
+\end{itemize}
+
+\subsection{Graph Dataset (data/dataset.py)}
+
+PyTorch Geometric dataset loader.
+
+\begin{lstlisting}[language=Python, caption={Dataset Class}]
+from torch_geometric.data import Dataset, Data
+
+class NOMAGraphDataset(Dataset):
+    def __init__(self, root, transform=None):
+        super().__init__(root, transform)
+        self.data_list = self.process()
+    
+    def len(self):
+        return len(self.data_list)
+    
+    def get(self, idx):
+        return self.data_list[idx]
+    
+    def process(self):
+        # Load CSV files
+        # Convert to PyG Data objects
+        # Return list of graphs
+        pass
+\end{lstlisting}
+
+\subsection{Model (models/pairpower_gnn.py)}
+
+Complete NOMA-GNN implementation.
+
+\begin{lstlisting}[language=Python, caption={Model Class Skeleton}]
+import torch
+import torch.nn as nn
+from torch_geometric.nn import SAGEConv
+
+class PairPowerGNN(nn.Module):
+    def __init__(self, in_dim=5, hidden_dim=128, num_layers=3):
+        super().__init__()
+        # Encoder
+        self.input_proj = nn.Linear(in_dim, hidden_dim)
+        self.convs = nn.ModuleList([
+            SAGEConv(hidden_dim, hidden_dim) 
+            for _ in range(num_layers)
+        ])
+        
+        # Decoders
+        self.pair_mlp = self._build_mlp(256, [128, 64, 1])
+        self.rate_mlp = self._build_mlp(256, [128, 64, 1])
+        self.alpha_mlp = self._build_mlp(256, [128, 64, 1])
+    
+    def forward(self, data):
+        # Encode nodes
+        x = F.relu(self.input_proj(data.x))
+        for conv in self.convs:
+            x = F.relu(conv(x, data.edge_index))
+        
+        # Decode edges
+        edge_emb = torch.cat([x[data.edge_index[0]], 
+                             x[data.edge_index[1]]], dim=1)
+        
+        p_pair = torch.sigmoid(self.pair_mlp(edge_emb))
+        R_sum = F.relu(self.rate_mlp(edge_emb))
+        alpha = torch.sigmoid(self.alpha_mlp(edge_emb))
+        
+        return p_pair, R_sum, alpha
+\end{lstlisting}
+
+\subsection{Training (training/train.py)}
+
+Main training script with checkpointing and logging.
+
+\subsection{Inference (inference/infer_pairing.py)}
+
+Real-time pairing for deployed systems.
+
+\section{Configuration Management}
+
+Global settings in \texttt{config.py}:
+
+\begin{lstlisting}[language=Python, caption={Configuration}]
+from dataclasses import dataclass
+
+@dataclass
+class Config:
+    # System parameters
+    TOTAL_POWER: float = 1.0
+    NOISE_POWER: float = 1e-9
+    SIC_THRESHOLD_DB: float = 8.0
+    BANDWIDTH_HZ: float = 20e6
+    
+    # Graph construction
+    USE_ANGLE_GUARD: bool = True
+    MIN_ANGLE_DEG: float = 25.0
+    
+    # Model architecture
+    IN_CHANNELS: int = 5
+    HIDDEN_DIM: int = 128
+    NUM_LAYERS: int = 3
+    DROPOUT: float = 0.2
+    
+    # Training
+    LR: float = 1e-3
+    WEIGHT_DECAY: float = 1e-4
+    EPOCHS: int = 200
+    BATCH_SIZE: int = 32
+    
+    # Loss weights
+    LAMBDA_BCE: float = 1.0
+    LAMBDA_RSUM: float = 0.5
+    LAMBDA_ALPHA: float = 0.3
+
+CFG = Config()
+\end{lstlisting}
+
+\section{Development Workflow}
+
+\subsection{Data Preparation}
+\begin{lstlisting}[language=bash]
+# Generate 50k scenarios
+python scripts/prepare_data.py --num_scenarios 50000 --output data/raw/
+\end{lstlisting}
+
+\subsection{Training}
+\begin{lstlisting}[language=bash]
+# Train model
+python training/train.py --config config.py --gpu 0
+\end{lstlisting}
+
+\subsection{Evaluation}
+\begin{lstlisting}[language=bash]
+# Test on new scenarios
+python inference/infer_pairing.py --checkpoint checkpoints/best_model.pt
+\end{lstlisting}
+
+\section{Code Quality}
+
+\subsection{Testing}
+Unit tests for critical components:
+\begin{itemize}
+    \item SIC constraint verification
+    \item Graph construction validity
+    \item Power allocation correctness
+    \item Rate calculation accuracy
+\end{itemize}
+
+\subsection{Documentation}
+\begin{itemize}
+    \item Inline docstrings (NumPy style)
+    \item Type hints for function signatures
+    \item README files in each subdirectory
+\end{itemize}
+
+\section{Reproducibility}
+
+All experiments are reproducible via:
+\begin{itemize}
+    \item Fixed random seeds (42)
+    \item Version-controlled dependencies (requirements.txt)
+    \item Saved hyperparameters (config.py)
+    \item Checkpointed models (best\_model.pt)
+\end{itemize}
+
+\section{Performance Optimization}
+
+\subsection{GPU Acceleration}
+\begin{itemize}
+    \item All tensor operations on CUDA
+    \item Mini-batch processing
+    \item Mixed-precision training (optional)
+\end{itemize}
+
+\subsection{Memory Efficiency}
+\begin{itemize}
+    \item Lazy dataset loading
+    \item Gradient checkpointing for large graphs
+    \item Sparse edge storage
+\end{itemize}

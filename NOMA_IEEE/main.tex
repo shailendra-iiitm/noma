@@ -1,0 +1,78 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+
+% ====== IEEE Standard Packages ======
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{url}
+
+% ====== Additional Packages ======
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage[section]{placeins}
+\usepackage[justification=centering]{caption}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+% ====== PDF Metadata ======
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+% figures live here:
+\graphicspath{{figures/}}
+
+\title{Graph Neural Network-Based User Pairing and Power Allocation for Downlink Power-Domain NOMA Systems\\
+{\footnotesize \textsuperscript{*}Note: This is a preprint version submitted for review}}
+
+\author{
+  \IEEEauthorblockN{Anisha Dwivedi, Shailendra Shukla, and Ramesh Ch. Mishra}
+  \IEEEauthorblockA{\textit{Dept. of Electronics and Communication Engineering} \\
+    \textit{Indian Institute of Information Technology, Senapati, Manipur, India}\\
+    \{anishas1121, shailendra.iiitsm\}@gmail.com, m.ramesh@iiitmanipur.ac.in}
+}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Power-Domain Non-Orthogonal Multiple Access (PD-NOMA) is a promising technology for 5G and beyond networks, enabling spectral efficiency improvements through intelligent user pairing and power allocation. However, traditional optimization-based pairing strategies suffer from high computational complexity ($O(N^3)$), limiting real-time deployment. This paper proposes NOMA-GNN, a novel Graph Neural Network framework based on GraphSAGE architecture that reformulates user pairing as a graph representation learning problem. We generate realistic Channel State Information using the 3GPP TR 38.901 Urban Macro model and develop a multi-task learning approach that jointly predicts pairing decisions, sum-rates, and power allocations while enforcing physical constraints including Successive Interference Cancellation (SIC) feasibility and angular separation. Comprehensive experiments on 50,000 scenarios demonstrate that NOMA-GNN achieves 95.8\% of optimal throughput with 92.5\% AUC for pairing classification, outperforming Static (81.4\%), Balanced (88.0\%), and Bipartite (93.4\%) baselines. The proposed method reduces inference complexity to $O(N \log N)$ with 20$\times$ speedup over Blossom matching, enabling millisecond-latency scheduling suitable for practical 5G New Radio deployments. Ablation studies validate the importance of multi-task learning, hard negative sampling, and angular features for achieving robust generalization across varying user densities and channel conditions.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Non-orthogonal multiple access, graph neural networks, user pairing, power allocation, deep learning, resource management, 5G networks, successive interference cancellation
+\end{IEEEkeywords}
+
+% ====== paper body ======
+\input{introduction}
+\input{literature_review}
+\input{problem_formulation}
+\input{system_model}
+\input{graph_matching}
+\input{clustering_methodology}
+\input{gnn_methodology}
+\input{simulation_setup}
+\input{result_discussion}     
+\input{conclusion}            
+
+% ====== Acknowledgment (Optional) ======
+% \section*{Acknowledgment}
+% The authors would like to thank...
+
+% ====== References ======
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+% ====== Biography Section (Optional for journal, usually not for conference) ======
+% \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{author1.jpg}}]{First Author}
+% Biography text here...
+% \end{IEEEbiography}
+
+\end{document}

@@ -1,0 +1,278 @@
+\chapter{Problem Formulation}
+\label{chap:problem}
+
+This chapter provides the mathematical formulation of the joint user pairing and power allocation problem in downlink PD-NOMA systems.
+
+\section{System Overview}
+
+Consider a single-cell downlink PD-NOMA system with:
+\begin{itemize}
+    \item One base station (BS) with total transmit power $P$
+    \item $N$ single-antenna User Equipment (UE) indexed by $\mathcal{N} = \{1, 2, \ldots, N\}$
+    \item $M$ Physical Resource Blocks (PRBs) with bandwidth $B$ each
+    \item Perfect Channel State Information (CSI) at the BS
+    \item Quasi-static flat fading channels
+\end{itemize}
+
+\section{Channel Model}
+
+The channel coefficient between the BS and user $i$ is:
+\begin{equation}
+h_i = \sqrt{PL_i \cdot SF_i} \cdot g_i
+\label{eq:channel_gain}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $PL_i$ is the path loss (distance-dependent attenuation)
+    \item $SF_i$ is the log-normal shadow fading
+    \item $g_i \sim \mathcal{CN}(0, 1)$ is the small-scale Rayleigh fading coefficient
+\end{itemize}
+
+The channel power gain is:
+\begin{equation}
+|h_i|^2 = PL_i \cdot SF_i \cdot |g_i|^2
+\end{equation}
+
+We assume users are ordered such that $|h_1|^2 \leq |h_2|^2 \leq \cdots \leq |h_N|^2$ (weak to strong).
+
+\section{NOMA Signal Model}
+
+\subsection{Two-User Pairing}
+
+For simplicity, we focus on two-user clusters. Consider pairing user $i$ (weak) with user $j$ (strong) where $|h_i|^2 < |h_j|^2$ on a single PRB with power $P$.
+
+The transmitted signal is:
+\begin{equation}
+s = \sqrt{\alpha P} \cdot x_i + \sqrt{(1-\alpha) P} \cdot x_j
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $x_i, x_j$ are unit-power symbols for users $i, j$
+    \item $\alpha \in (0, 1)$ is the power allocation coefficient
+    \item $\alpha > 0.5$ allocates more power to the weaker user $i$
+\end{itemize}
+
+\subsection{User $i$ (Weak User) Reception}
+
+User $i$ treats user $j$'s signal as noise. The received signal is:
+\begin{equation}
+y_i = h_i \left( \sqrt{\alpha P} x_i + \sqrt{(1-\alpha) P} x_j \right) + n_i
+\end{equation}
+
+where $n_i \sim \mathcal{CN}(0, \sigma^2)$ is AWGN with power $\sigma^2$.
+
+The Signal-to-Interference-plus-Noise Ratio (SINR) is:
+\begin{equation}
+\text{SINR}_i = \frac{\alpha P |h_i|^2}{(1-\alpha) P |h_i|^2 + \sigma^2}
+\label{eq:sinr_weak}
+\end{equation}
+
+\subsection{User $j$ (Strong User) Reception}
+
+User $j$ first decodes user $i$'s signal treating its own as noise:
+\begin{equation}
+\text{SINR}_{j \to i} = \frac{\alpha P |h_j|^2}{(1-\alpha) P |h_j|^2 + \sigma^2}
+\label{eq:sinr_sic}
+\end{equation}
+
+After successfully decoding $x_i$, user $j$ performs SIC to cancel $x_i$ from the received signal, then decodes its own:
+\begin{equation}
+\text{SINR}_j = \frac{(1-\alpha) P |h_j|^2}{\sigma^2}
+\label{eq:sinr_strong}
+\end{equation}
+
+\subsection{SIC Feasibility Constraint}
+
+For successful SIC, user $j$ must decode $x_i$ with sufficient reliability:
+\begin{equation}
+\text{SINR}_{j \to i} \geq \gamma_{\text{th}}
+\label{eq:sic_constraint}
+\end{equation}
+
+where $\gamma_{\text{th}}$ is the SIC decoding threshold (typically 8 dB = 6.31 linear).
+
+Substituting Eq.~\eqref{eq:sinr_sic}:
+\begin{equation}
+\frac{\alpha P |h_j|^2}{(1-\alpha) P |h_j|^2 + \sigma^2} \geq \gamma_{\text{th}}
+\end{equation}
+
+Rearranging:
+\begin{equation}
+\alpha \geq \frac{\gamma_{\text{th}} \left((1-\alpha) P |h_j|^2 + \sigma^2\right)}{P |h_j|^2}
+\end{equation}
+
+For high SNR ($P |h_j|^2 \gg \sigma^2$), this simplifies to:
+\begin{equation}
+\frac{|h_j|^2}{|h_i|^2} \geq \frac{\gamma_{\text{th}}}{1 - \gamma_{\text{th}}/(1 + \gamma_{\text{th}})} \approx \gamma_{\text{th}}
+\label{eq:channel_disparity}
+\end{equation}
+
+Thus, SIC requires sufficient channel gain disparity (typically $|h_j|^2 / |h_i|^2 \geq 8$ dB).
+
+\section{Rate Analysis}
+
+\subsection{Individual Rates}
+
+Using Shannon capacity formula with bandwidth $B$:
+
+\textbf{Weak user $i$ rate:}
+\begin{equation}
+R_i = B \log_2\left(1 + \frac{\alpha P |h_i|^2}{(1-\alpha) P |h_i|^2 + \sigma^2}\right)
+\label{eq:rate_weak}
+\end{equation}
+
+\textbf{Strong user $j$ rate} (after SIC):
+\begin{equation}
+R_j = B \log_2\left(1 + \frac{(1-\alpha) P |h_j|^2}{\sigma^2}\right)
+\label{eq:rate_strong}
+\end{equation}
+
+\subsection{Sum-Rate}
+
+The sum-rate for pair $(i, j)$ is:
+\begin{equation}
+R_{\text{sum}}(i, j, \alpha) = R_i + R_j
+\label{eq:sum_rate}
+\end{equation}
+
+\section{Power Allocation Optimization}
+
+For a fixed pair $(i, j)$, the optimal power allocation maximizes sum-rate:
+\begin{equation}
+\begin{aligned}
+\alpha^* = \argmax_{\alpha \in (0,1)} \quad & R_{\text{sum}}(i, j, \alpha) \\
+\text{s.t.} \quad & \text{SINR}_{j \to i}(\alpha) \geq \gamma_{\text{th}}
+\end{aligned}
+\label{eq:power_opt}
+\end{equation}
+
+\subsection{Closed-Form Solution}
+
+Taking the derivative of $R_{\text{sum}}$ with respect to $\alpha$ and setting to zero yields a transcendental equation. In practice, we use:
+
+\begin{enumerate}
+    \item \textbf{Bisection Search:} Numerically find $\alpha^*$ in range $[\alpha_{\min}, 1)$ where $\alpha_{\min}$ satisfies the SIC constraint.
+    
+    \item \textbf{Fixed Allocation:} Common heuristic sets $\alpha = 0.8$ for all pairs.
+    
+    \item \textbf{Water-Filling:} Allocates power proportional to channel quality difference.
+\end{enumerate}
+
+For this project, we use bisection search with tolerance $10^{-4}$ and maximum 80 iterations.
+
+\section{User Pairing Problem}
+
+\subsection{Decision Variables}
+
+Define binary pairing variables:
+\begin{equation}
+x_{ij} = \begin{cases}
+1 & \text{if users } i \text{ and } j \text{ are paired} \\
+0 & \text{otherwise}
+\end{cases}
+\end{equation}
+
+For symmetric pairing, $x_{ij} = x_{ji}$ and $i \neq j$.
+
+\subsection{Optimization Formulation}
+
+The joint pairing and power allocation problem is:
+\begin{equation}
+\begin{aligned}
+\max_{x, \alpha} \quad & \sum_{i=1}^{N} \sum_{j=i+1}^{N} x_{ij} \cdot R_{\text{sum}}(i, j, \alpha_{ij}) \\
+\text{s.t.} \quad & \sum_{j=1, j \neq i}^{N} x_{ij} \leq 1, \quad \forall i \in \mathcal{N} \quad \text{(matching constraint)} \\
+& x_{ij} \in \{0, 1\}, \quad \forall i, j \in \mathcal{N} \\
+& \frac{|h_j|^2}{|h_i|^2} \geq \gamma_{\text{th}}, \quad \text{if } x_{ij} = 1 \quad \text{(SIC constraint)} \\
+& |\theta_i - \theta_j| \geq \Delta\theta_{\min}, \quad \text{if } x_{ij} = 1 \quad \text{(angular separation)} \\
+& \alpha_{ij} \in (0, 1), \quad \forall i, j
+\end{aligned}
+\label{eq:main_problem}
+\end{equation}
+
+where $\theta_i$ is the angular position of user $i$.
+
+\subsection{Complexity Analysis}
+
+Problem~\eqref{eq:main_problem} is a Mixed-Integer Nonlinear Program (MINLP):
+\begin{itemize}
+    \item Binary variables $x_{ij}$: $\binom{N}{2}$ decisions
+    \item Continuous variables $\alpha_{ij}$: require solving \eqref{eq:power_opt} for each pair
+    \item Matching constraint makes it a maximum-weight matching problem
+\end{itemize}
+
+\textbf{Computational Complexity:}
+\begin{itemize}
+    \item Exhaustive search: $O((N-1)!! \cdot N) = O(N!)$ for all possible matchings
+    \item Blossom algorithm: $O(N^3)$ for maximum-weight matching
+    \item Heuristic methods: $O(N \log N)$ for sorting-based approaches
+\end{itemize}
+
+For real-time scheduling (1 ms TTI in 5G NR), $N=100$ users require solutions in <1 ms, making optimization infeasible.
+
+\section{Fairness Metrics}
+
+\subsection{Jain's Fairness Index}
+
+Measures rate distribution uniformity:
+\begin{equation}
+\mathcal{J} = \frac{\left(\sum_{i=1}^{N} R_i\right)^2}{N \sum_{i=1}^{N} R_i^2}
+\label{eq:jains_index}
+\end{equation}
+
+$\mathcal{J} = 1$ indicates perfect fairness; $\mathcal{J} \to 1/N$ indicates one user monopolizes resources.
+
+\subsection{Proportional Fairness}
+
+Maximizes the sum of logarithmic rates:
+\begin{equation}
+\max \sum_{i=1}^{N} \log(R_i)
+\end{equation}
+
+This balances throughput and fairness, preventing starvation of weak users.
+
+\section{Reformulation as Graph Learning}
+
+\subsection{Graph Representation}
+
+We model the pairing problem as an undirected graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$:
+
+\begin{itemize}
+    \item \textbf{Nodes} $\mathcal{V}$: Each user $i$ is a node with feature vector:
+    \begin{equation}
+    \mathbf{x}_i = [|h_i|^2, \, d_i, \, \theta_i, \, \text{SNR}_i, \, \text{PL}_i]^\top
+    \end{equation}
+    
+    \item \textbf{Edges} $\mathcal{E}$: Edge $(i, j)$ exists if:
+    \begin{enumerate}
+        \item $|h_j|^2 / |h_i|^2 \geq \gamma_{\text{th}}$ (SIC feasibility)
+        \item $|\theta_i - \theta_j| \geq \Delta\theta_{\min}$ (angular separation)
+        \item $i < j$ (to avoid duplicates)
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Learning Objectives}
+
+For each edge $(i, j) \in \mathcal{E}$, we predict:
+
+\begin{enumerate}
+    \item \textbf{Pairing Probability} $p_{ij} \in [0, 1]$: Likelihood that $(i, j)$ should be paired
+    
+    \item \textbf{Sum-Rate} $\hat{R}_{ij}$: Predicted achievable sum-rate
+    
+    \item \textbf{Power Allocation} $\hat{\alpha}_{ij} \in (0, 1)$: Predicted optimal power split
+\end{enumerate}
+
+This multi-task formulation enables joint optimization and exploits coupling between objectives.
+
+\section{Summary}
+
+This chapter formulated the NOMA user pairing problem as:
+\begin{itemize}
+    \item A constrained MINLP with exponential search space
+    \item A maximum-weight matching problem solvable in $O(N^3)$ via Blossom
+    \item A graph representation learning problem amenable to GNNs
+\end{itemize}
+
+The next chapters detail system implementation, channel modeling, and solution methodologies.

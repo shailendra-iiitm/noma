@@ -1,0 +1,36 @@
+\section{Problem Formulation}
+
+\subsection{System Model and Rate Expressions}
+Consider a downlink PD-NOMA system serving $N$ users $\mathcal{U}=\{u_1,u_2,\dots,u_N\}$ randomly distributed in a single-cell Urban Macro (UMa) environment defined by 3GPP TR 38.901. Each user $u_i$ experiences a complex channel coefficient $h_i \in \mathbb{C}$ accounting for path loss, shadowing, and small-scale fading, with channel power gain $|h_i|^2$. 
+
+The base station transmits a superposed signal $x = \sum_{i\in\mathcal{U}} \sqrt{P_i}s_i$, where $s_i$ is the unit-power symbol for user $i$ and $P_i$ is the allocated transmit power. The received signal at user $i$ is
+\begin{equation}
+y_i = h_i \sum_{j\in\mathcal{U}} \sqrt{P_j}s_j + n_i,
+\end{equation}
+where $n_i \sim \mathcal{CN}(0,\sigma^2)$ is additive white Gaussian noise. For paired users $(u_i,u_j)$ with $|h_i|^2 < |h_j|^2$ sharing power levels $P_i$ and $P_j$, the achievable rates under successive interference cancellation (SIC) are
+\begin{equation}
+R_i = \log_2\!\left(1+\frac{|h_i|^2 P_i}{|h_i|^2 P_j+\sigma^2}\right), \quad
+R_j = \log_2\!\left(1+\frac{|h_j|^2 P_j}{\sigma^2}\right),
+\end{equation}
+where user $j$ (stronger channel) first decodes and cancels $u_i$'s signal before decoding its own. SIC feasibility requires
+\begin{equation}
+\text{SINR}_{j \to i} = \frac{P_i |h_j|^2}{P_j |h_j|^2 + \sigma^2} \geq \gamma_{\text{SIC}},
+\end{equation}
+which simplifies to a channel-gain-based constraint: $10\log_{10}(|h_j|^2/|h_i|^2) \geq \Delta_{\text{SIC}}$ (typically 8 dB). 
+
+\subsection{Optimization Problem}
+The objective is to maximize system sum-rate while ensuring fairness and satisfying power and SIC constraints:
+\begin{equation}
+\begin{aligned}
+\max_{\mathcal{P},\,\{P_i,P_j\}} \quad & \sum_{(i,j)\in\mathcal{P}} (R_i + R_j) \\
+\text{s.t.} \quad &
+P_i + P_j \leq P_{\text{total}}, \ \forall (i,j)\in\mathcal{P}, \\
+& R_k \geq R_{\min}, \ \forall k\in\mathcal{U}, \\
+& \text{SINR}_{j \to i} \geq \gamma_{\text{SIC}}, \ \forall (i,j)\in\mathcal{P}, \\
+& \mathcal{P}\ \text{is a valid matching},
+\end{aligned}
+\end{equation}
+where $\mathcal{P} \subseteq \mathcal{U} \times \mathcal{U}$ represents the pairing set such that each user appears in at most one pair.
+
+\subsection{Computational Complexity}
+This problem is combinatorial and non-convex. For $N$ users, the number of possible matchings (including unpaired users) is $(2N-1)!! = 1 \cdot 3 \cdot 5 \cdots (2N-1)$. For $N=12$, this yields $23!! \approx 1.1 \times 10^{13}$ combinations—requiring approximately 316 years at 1 $\mu$s per evaluation. Optimal graph matching algorithms (e.g., Blossom) achieve $O(N^3)$ complexity but remain prohibitive for millisecond-scale resource allocation in 5G (1 ms TTI). This motivates machine learning approaches: traditional baselines (Static, Balanced, Bipartite matching) provide sub-optimal solutions in $O(N^2)$ time, while our proposed GNN achieves $O(N \log N)$ complexity with near-optimal performance by learning pairing patterns from labeled training data generated via Blossom algorithm.

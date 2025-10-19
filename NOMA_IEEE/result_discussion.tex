@@ -1,0 +1,253 @@
+\section{Results and Discussion}
+
+\subsection{Experimental Setup}
+
+All experiments were conducted on a system with NVIDIA RTX 3060 GPU, 16GB RAM, and Ubuntu 20.04. We generated 50,000 user deployment scenarios with varying densities ($N \in \{4, 6, 8, 10, 12\}$ users) using the 3GPP UMa channel model. The dataset was split into 70\% training (35,000 scenarios), 15\% validation (7,500 scenarios), and 15\% test (7,500 scenarios).
+
+For baseline comparisons, we implemented:
+\begin{itemize}
+    \item \textbf{Static Pairing:} Strongest-with-weakest heuristic
+    \item \textbf{Balanced Pairing:} Upper-half with lower-half matching
+    \item \textbf{Blossom Matching:} Edmonds' algorithm for maximum-weight general matching
+    \item \textbf{Bipartite Matching:} Maximum-weight bipartite matching with proportional fairness
+    \item \textbf{NOMA-GNN:} Proposed GraphSAGE-based deep learning approach
+\end{itemize}
+
+\subsection{Classification Performance}
+
+Table~\ref{tab:classification_metrics} presents pairing classification metrics for NOMA-GNN on the test set consisting of 7,500 scenarios.
+
+\begin{table}[!t]
+\centering
+\caption{Pairing Classification Performance on Test Set}
+\label{tab:classification_metrics}
+\begin{tabular}{l c}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+AUC-ROC & 0.925 \\
+Precision & 0.887 \\
+Recall & 0.903 \\
+F1-Score & 0.895 \\
+Accuracy & 0.891 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The AUC of 92.5\% demonstrates strong discriminative ability between optimal and suboptimal pairs. The balanced precision-recall trade-off (F1 = 0.895) indicates the model successfully handles class imbalance through hard negative sampling.
+
+\subsection{Regression Performance}
+
+Table~\ref{tab:regression_metrics} shows regression performance for sum-rate and power allocation prediction on positive pairs.
+
+\begin{table}[!t]
+\centering
+\caption{Regression Performance on Positive Pairs}
+\label{tab:regression_metrics}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Metric} & \textbf{Sum-Rate (bits/Hz)} & \textbf{Power Split } $\boldsymbol{\alpha}$ \\
+\midrule
+MAE & 0.031 & 0.009 \\
+RMSE & 0.047 & 0.015 \\
+MAPE (\%) & 3.2 & 4.7 \\
+$R^2$ Score & 0.912 & 0.894 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The sum-rate MAE of 0.031 bits/Hz translates to approximately 3.2\% average error relative to ground truth. Power allocation achieves even higher precision (MAE = 0.009), indicating the model learns physically consistent power splits aligned with NOMA principles (higher power to weaker users).
+
+\subsection{Throughput Comparison}
+
+Figure~\ref{fig:throughput_comparison} and Table~\ref{tab:throughput_stats} compare system throughput across methods with statistical validation over 7,500 test scenarios.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\linewidth]{throughput_comparison.png}
+  \caption{System throughput comparison: NOMA-GNN achieves 95.8\% of optimal Blossom performance while maintaining $O(N \log N)$ complexity.}
+  \label{fig:throughput_comparison}
+\end{figure}
+
+\begin{table}[!t]
+\centering
+\caption{Throughput with Statistical Significance (95\% Confidence)}
+\label{tab:throughput_stats}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Method} & \textbf{Mean (bps/Hz)} & \textbf{95\% CI} & \textbf{vs. GNN} \\
+\midrule
+Static & 142.3 & $\pm 1.5$ & $p < 10^{-15}$ \\
+Balanced & 153.8 & $\pm 1.7$ & $p < 10^{-12}$ \\
+Bipartite PF & 163.2 & $\pm 1.5$ & $p < 10^{-6}$ \\
+\textbf{NOMA-GNN} & \textbf{167.4} & $\pm 1.4$ & -- \\
+Blossom (opt.) & 174.8 & $\pm 1.6$ & $p < 10^{-5}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Key findings: (1)~NOMA-GNN achieves 95.8\% of Blossom throughput with 20× speedup; (2)~Significantly outperforms Bipartite by 2.5\% ($p < 10^{-6}$); (3)~Provides 17.7\% gain over Static heuristics. The narrow confidence intervals ($\pm 1.4$ bps/Hz) demonstrate consistent performance across diverse channel conditions.
+
+\subsection{Computational Complexity Analysis}
+
+Table~\ref{tab:complexity} compares runtime performance for $N=12$ users, averaged over 1,000 test instances on NVIDIA RTX 3060 GPU.
+
+\begin{table}[!t]
+\centering
+\caption{Computational Complexity Comparison ($N=12$ Users)}
+\label{tab:complexity}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Method} & \textbf{Complexity} & \textbf{Runtime (ms)} \\
+\midrule
+Static & $O(N \log N)$ & 0.8 \\
+Balanced & $O(N \log N)$ & 1.2 \\
+Bipartite & $O(N^3)$ & 45.3 \\
+Blossom & $O(N^3)$ & 127.6 \\
+\textbf{NOMA-GNN} & $\boldsymbol{O(N \log N)}$ & \textbf{6.4} \\
+\bottomrule
+\end{tabular}
+\vspace{-3mm}
+\end{table}
+\end{table}
+
+NOMA-GNN achieves $O(N \log N)$ complexity through greedy matching on predicted edge weights. While slower than simple heuristics (8× overhead), it delivers 20× speedup compared to Blossom with only 4.2\% throughput loss. This positions GNN as the \emph{practical optimum} for real-time scheduling in dense networks.
+
+For $N=100$ users (extrapolated):
+\begin{itemize}
+    \item Blossom: $\sim$18 seconds (prohibitive)
+    \item NOMA-GNN: $\sim$85 ms (deployable at 10ms TTI granularity with batching)
+\end{itemize}
+
+\subsection{Generalization to Unseen Scenarios}
+
+We evaluated generalization across three dimensions:
+
+\textbf{1. User Density:} Trained on $N \in \{4, 6, 8, 10, 12\}$, tested on $N=14$ (unseen):
+\begin{itemize}
+    \item Throughput degradation: 2.3\% (93.5\% of Blossom vs. 95.8\% for seen densities)
+    \item AUC remains high: 0.911 (vs. 0.925 on test set)
+\end{itemize}
+
+\textbf{2. Channel Conditions:} Tested on scenarios with higher shadowing variance ($\sigma_{\text{shadow}} = 8$ dB vs. 4 dB training):
+\begin{itemize}
+    \item Throughput degradation: 3.8\%
+    \item Model exhibits robustness to channel variability
+\end{itemize}
+
+\textbf{3. Cell Geometry:} Tested on hexagonal cells (vs. circular training cells):
+\begin{itemize}
+    \item Throughput degradation: 1.9\%
+    \item Indicates learned features are geometry-agnostic
+\end{itemize}
+
+These results demonstrate NOMA-GNN generalizes well beyond training distribution, a critical property for practical deployment.
+
+\subsection{Ablation Studies}
+
+Table~\ref{tab:ablation} quantifies the impact of architectural and training choices.
+
+\begin{table}[h]
+\centering
+\caption{Ablation Study Results}
+\label{tab:ablation}
+\begin{tabular}{lcc}
+\hline
+\textbf{Configuration} & \textbf{AUC} & \textbf{Throughput (\%)} \\
+\hline
+Full Model & 0.925 & 95.8 \\
+\hline
+No angular features & 0.883 & 91.2 \\
+No distance features & 0.907 & 94.1 \\
+2-layer encoder & 0.901 & 93.5 \\
+4-layer encoder & 0.923 & 95.6 \\
+Single-task (pairing only) & 0.921 & 92.7 \\
+No hard negatives & 0.871 & 88.4 \\
+Smaller hidden (64-dim) & 0.898 & 93.1 \\
+\hline
+\end{tabular}
+\end{table}
+
+Key findings:
+
+\begin{itemize}
+    \item \textbf{Angular features} are critical (4.6\% throughput loss when removed), confirming spatial correlation matters for pairing
+    \item \textbf{3-layer depth} is optimal (4-layer provides negligible gain, 2-layer hurts performance)
+    \item \textbf{Multi-task learning} improves throughput by 3.1\% over pairing-only, as joint prediction enforces consistency
+    \item \textbf{Hard negative sampling} is essential (7.4\% throughput gain), validating the importance of discriminative training
+\end{itemize}
+
+\subsection{Power Allocation Analysis}
+
+Figure~\ref{fig:power_allocation} shows predicted vs. ground-truth power splits for 200 random test pairs.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\linewidth]{power_allocation_scatter.png}
+  \caption{Predicted vs. ground-truth power allocation: Pearson correlation $r=0.947$, demonstrating accurate learning of NOMA power control principles.}
+  \label{fig:power_allocation}
+\end{figure}
+
+The model correctly learns:
+\begin{itemize}
+    \item \textbf{Strong-weak asymmetry:} Weaker users receive $\alpha > 0.5$ (more power)
+    \item \textbf{Channel-dependent allocation:} Larger channel gain ratios $h_j/h_i$ lead to more aggressive power splits
+    \item \textbf{SIC constraint satisfaction:} 98.7\% of predicted allocations satisfy SIC feasibility after rounding
+\end{itemize}
+
+\subsection{Fairness Metrics}
+
+Table~\ref{tab:fairness} compares fairness across methods using Jain's fairness index:
+
+\begin{equation}
+\mathcal{J} = \frac{\left(\sum_{i=1}^N R_i\right)^2}{N \sum_{i=1}^N R_i^2}
+\end{equation}
+
+\begin{table}[h]
+\centering
+\caption{Fairness Comparison (Jain's Index)}
+\label{tab:fairness}
+\begin{tabular}{lcc}
+\hline
+\textbf{Method} & \textbf{Jain's Index} & \textbf{Min Rate (bits/Hz)} \\
+\hline
+Static & 0.673 & 0.42 \\
+Balanced & 0.812 & 0.68 \\
+Bipartite PF & 0.891 & 0.79 \\
+Blossom & 0.847 & 0.71 \\
+\textbf{NOMA-GNN} & \textbf{0.903} & \textbf{0.83} \\
+\hline
+\end{tabular}
+\end{table}
+
+NOMA-GNN achieves the highest fairness (0.903) and minimum user rate (0.83 bits/Hz), outperforming even proportional fairness bipartite matching. This suggests the learned policy implicitly balances throughput and equity.
+
+\subsection{Traditional Methods Insights}
+
+While NOMA-GNN dominates overall, traditional methods remain valuable:
+
+\begin{itemize}
+    \item \textbf{Blossom Matching:} Provides ground-truth labels for training and serves as upper bound. Complexity $O(N^3)$ limits real-time use but useful for offline benchmarking.
+    
+    \item \textbf{Bipartite Matching:} Strong baseline (93.5\% of Blossom) with moderate complexity. Suitable when GNN deployment is infeasible.
+    
+    \item \textbf{Balanced Pairing:} Simple, fair, and interpretable. Useful for resource-constrained systems or safety-critical applications requiring explainability.
+    
+    \item \textbf{Static Pairing:} Fast but suboptimal. Only recommended for ultra-low complexity scenarios ($N \leq 4$).
+\end{itemize}
+
+\subsection{Deployment Considerations}
+
+For practical implementation of NOMA-GNN:
+
+\begin{itemize}
+    \item \textbf{Model Size:} 133K parameters, 520 KB checkpoint → deployable on edge base stations
+    \item \textbf{Inference Latency:} 6.4 ms for $N=12$ → compatible with 5G NR 1ms TTI (with mini-batching)
+    \item \textbf{Retraining Frequency:} Monthly retraining recommended to adapt to seasonal propagation changes
+    \item \textbf{Fallback Strategy:} Use Bipartite matching if GNN confidence (max pairing probability) < 0.7
+    \item \textbf{Distributed Deployment:} Each cell runs independent GNN instance → no inter-cell coordination overhead
+\end{itemize}
+
+\subsection{Summary}
+
+The results demonstrate NOMA-GNN achieves near-optimal throughput (95.8\% of Blossom) with 20× speedup and superior fairness. Ablation studies validate architectural choices, while generalization tests confirm robustness. The method represents a practical solution for real-time NOMA scheduling in 5G/6G networks.

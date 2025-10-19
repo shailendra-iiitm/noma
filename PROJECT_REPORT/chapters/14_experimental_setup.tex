@@ -1,0 +1,256 @@
+\chapter{Experimental Setup and Evaluation Metrics}
+\label{chap:experiments}
+
+\section{Dataset Specifications}
+
+\subsection{Training Dataset}
+\begin{itemize}
+    \item Total scenarios: 50,000
+    \item User counts: $N \in \{4, 6, 8, 10, 12\}$ (uniform distribution)
+    \item Cell radius: 5000 m
+    \item Carrier frequency: 3.5 GHz
+    \item Total size: ~2.5 GB (CSV format)
+\end{itemize}
+
+\subsection{Data Split}
+\begin{table}[H]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Split} & \textbf{Scenarios} & \textbf{Percentage} \\
+\midrule
+Training & 35,000 & 70\% \\
+Validation & 7,500 & 15\% \\
+Test & 7,500 & 15\% \\
+\bottomrule
+\end{tabular}
+\caption{Dataset Split}
+\end{table}
+
+\subsection{Test Scenarios}
+
+\textbf{In-Distribution:} Same as training ($N \in \{4,6,8,10,12\}$)
+
+\textbf{Out-of-Distribution:}
+\begin{enumerate}
+    \item \textbf{Unseen Density:} $N=14$ users
+    \item \textbf{Higher Shadowing:} $\sigma_{SF} = 8$ dB (vs 4-6 dB training)
+    \item \textbf{Hexagonal Cells:} Different geometry
+\end{enumerate}
+
+\section{Hardware and Software Environment}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Specification} \\
+\midrule
+CPU & Intel Core i7-10700 @ 2.9 GHz \\
+RAM & 16 GB DDR4 \\
+GPU & NVIDIA GeForce RTX 3060 (6GB VRAM) \\
+OS & Ubuntu 20.04 LTS \\
+CUDA & 11.7 \\
+Python & 3.9.13 \\
+PyTorch & 1.13.0 \\
+PyTorch Geometric & 2.2.0 \\
+\bottomrule
+\end{tabular}
+\caption{Experimental Environment}
+\end{table}
+
+\section{Hyperparameters}
+
+\subsection{GNN Architecture}
+\begin{table}[H]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Input features & 5 \\
+Hidden dimension & 128 \\
+Number of layers & 3 \\
+Dropout rate & 0.3 \\
+Aggregation & Mean \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Training}
+\begin{table}[H]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Learning rate & $10^{-3}$ \\
+Optimizer & Adam \\
+Weight decay & $10^{-4}$ \\
+Batch size & 32 \\
+Max epochs & 200 \\
+Early stopping patience & 25 \\
+LR scheduler patience & 10 \\
+LR reduction factor & 0.5 \\
+Gradient clipping & 1.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Loss Weights}
+\begin{table}[H]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Task} & \textbf{Weight} \\
+\midrule
+Pairing (BCE) & 1.0 \\
+Sum-Rate (MAE) & 0.5 \\
+Power Allocation (MAE) & 0.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Evaluation Metrics}
+
+\subsection{Classification Metrics (Pairing)}
+
+\textbf{AUC-ROC:} Area under Receiver Operating Characteristic curve
+\begin{equation}
+\text{AUC} = \int_{0}^{1} \text{TPR}(\text{FPR}^{-1}(x)) dx
+\end{equation}
+
+\textbf{Precision:}
+\begin{equation}
+\text{Precision} = \frac{TP}{TP + FP}
+\end{equation}
+
+\textbf{Recall:}
+\begin{equation}
+\text{Recall} = \frac{TP}{TP + FN}
+\end{equation}
+
+\textbf{F1-Score:}
+\begin{equation}
+F1 = 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+\end{equation}
+
+\subsection{Regression Metrics (Sum-Rate, Power)}
+
+\textbf{Mean Absolute Error (MAE):}
+\begin{equation}
+\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |\hat{y}_i - y_i|
+\end{equation}
+
+\textbf{Root Mean Squared Error (RMSE):}
+\begin{equation}
+\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (\hat{y}_i - y_i)^2}
+\end{equation}
+
+\textbf{Mean Absolute Percentage Error (MAPE):}
+\begin{equation}
+\text{MAPE} = \frac{100\%}{n} \sum_{i=1}^{n} \left|\frac{\hat{y}_i - y_i}{y_i}\right|
+\end{equation}
+
+\textbf{R² Score:}
+\begin{equation}
+R^2 = 1 - \frac{\sum_{i}(\hat{y}_i - y_i)^2}{\sum_{i}(y_i - \bar{y})^2}
+\end{equation}
+
+\subsection{System Performance Metrics}
+
+\textbf{System Throughput:}
+\begin{equation}
+R_{total} = \sum_{\text{all pairs}} R_{sum}(i,j)
+\end{equation}
+
+\textbf{Average User Rate:}
+\begin{equation}
+\bar{R} = \frac{R_{total}}{N_{paired}}
+\end{equation}
+
+\textbf{Throughput Ratio (vs Blossom):}
+\begin{equation}
+\eta = \frac{R_{total}^{\text{method}}}{R_{total}^{\text{Blossom}}} \times 100\%
+\end{equation}
+
+\textbf{Jain's Fairness Index:}
+\begin{equation}
+\mathcal{J} = \frac{\left(\sum_{i} R_i\right)^2}{N \sum_{i} R_i^2}
+\end{equation}
+
+\subsection{Computational Metrics}
+
+\textbf{Runtime:} Wall-clock time for pairing (excluding power optimization)
+
+\textbf{Speedup:}
+\begin{equation}
+\text{Speedup} = \frac{T_{\text{Blossom}}}{T_{\text{method}}}
+\end{equation}
+
+\textbf{Model Size:} Number of parameters and checkpoint file size
+
+\section{Baseline Methods}
+
+\begin{enumerate}
+    \item \textbf{Static Pairing:} Strongest-with-weakest
+    \item \textbf{Balanced Pairing:} Upper-half with lower-half
+    \item \textbf{Blossom Matching:} Optimal general graph matching
+    \item \textbf{Bipartite PF:} Bipartite with proportional fairness
+    \item \textbf{NOMA-GNN:} Proposed method
+\end{enumerate}
+
+\section{Experimental Procedure}
+
+\subsection{Training Phase}
+\begin{enumerate}
+    \item Generate 50k scenarios with 3GPP UMa channels
+    \item Compute ground-truth labels via Blossom
+    \item Split data 70/15/15
+    \item Train NOMA-GNN for up to 200 epochs
+    \item Save best model based on validation AUC
+\end{enumerate}
+
+\subsection{Testing Phase}
+\begin{enumerate}
+    \item Load test scenarios
+    \item Run all 5 methods on each scenario
+    \item Record throughput, runtime, fairness
+    \item Compute aggregate statistics
+\end{enumerate}
+
+\subsection{Ablation Studies}
+\begin{enumerate}
+    \item Remove angular features: Train without $\theta_i$
+    \item Vary encoder depth: 2, 3, 4 layers
+    \item Single-task: Train only pairing classifier
+    \item No hard negatives: Uniform negative sampling
+    \item Different hidden dimensions: 64, 128, 256
+\end{enumerate}
+
+\subsection{Generalization Tests}
+\begin{enumerate}
+    \item Test on $N=14$ users (unseen density)
+    \item Test with $\sigma_{SF} = 8$ dB shadowing
+    \item Test on hexagonal cell geometry
+\end{enumerate}
+
+\section{Statistical Significance}
+
+All results reported with:
+\begin{itemize}
+    \item Mean ± standard deviation over test set
+    \item 95\% confidence intervals
+    \item Paired t-tests for method comparisons ($p < 0.05$)
+\end{itemize}
+
+\section{Reproducibility Statement}
+
+All experiments are reproducible via:
+\begin{itemize}
+    \item Fixed random seeds: 42
+    \item Versioned dependencies: requirements.txt
+    \item Saved configurations: config.py
+    \item Public code repository: [to be added]
+    \item Dataset generation scripts
+\end{itemize}

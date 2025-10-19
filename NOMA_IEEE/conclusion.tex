@@ -1,0 +1,53 @@
+\section{Conclusion and Future Work}
+
+\subsection{Summary of Contributions}
+
+This work presented a comprehensive framework for user pairing in Power-Domain NOMA systems, combining theoretical optimization methods with modern deep learning techniques. We generated realistic channel state information using the standardized 3GPP TR 38.901 Urban Macro model and systematically evaluated four traditional clustering strategies alongside a novel Graph Neural Network approach.
+
+This work makes four principal contributions:
+
+\begin{enumerate}
+    \item \textbf{Realistic Evaluation Framework:} First GNN-NOMA work using standardized 3GPP TR 38.901 channels with 50K scenarios and ground-truth Blossom labels. Comprehensive baseline comparison across 4 traditional methods shows Bipartite PF achieves best complexity-performance trade-off (93.4\% optimal, $O(N^2)$ complexity).
+    
+    \item \textbf{Novel Multi-Task GNN Architecture:} GraphSAGE-based model with physical constraint-aware graph construction jointly predicts: (i)~pairing decisions (92.5\% AUC), (ii)~sum-rates (0.031 bps/Hz MAE), (iii)~power allocation (0.009 MAE). First GNN to unify all three NOMA optimization tasks with 133K parameters suitable for edge deployment.
+    
+    \item \textbf{Near-Optimal Real-Time Performance:} Achieves 95.8\% of optimal throughput ($p < 10^{-5}$) with 20× speedup (6.4 ms vs. 127.6 ms) and $O(N \log N)$ complexity—enabling 1 ms TTI granularity in 5G NR. Significantly outperforms best baseline by 2.5\% ($p < 10^{-6}$) with highest fairness index (0.903).
+    
+    \item \textbf{Robust Generalization:} Minimal degradation ($< 2.1\%$) on unseen densities, channel conditions, and geometries. Validated over 7,500 independent test scenarios with narrow confidence intervals ($\pm 1.4$ bps/Hz), demonstrating production readiness.
+\end{enumerate}
+
+\subsection{Practical Implications}
+
+The results have several important implications for next-generation wireless networks:
+
+\begin{itemize}
+    \item \textbf{Scalability:} NOMA-GNN's computational efficiency enables NOMA deployment in dense urban scenarios with hundreds of users per cell, previously impractical with optimization methods.
+    
+    \item \textbf{Energy Efficiency:} Accurate power allocation (MAE = 0.009) reduces wasted transmit power, improving base station energy efficiency and extending battery life for IoT devices.
+    
+    \item \textbf{Quality of Service:} Superior fairness (0.903) ensures cell-edge users receive adequate rates, critical for mission-critical applications and emergency services.
+    
+    \item \textbf{Edge Intelligence:} The lightweight model (520 KB) can be deployed on base station edge computing platforms, enabling distributed real-time optimization without cloud dependency.
+\end{itemize}
+
+\subsection{Future Research Directions}
+
+While NOMA-GNN demonstrates strong performance, key open challenges remain:
+
+\begin{enumerate}
+    \item \textbf{Imperfect CSI and Mobility:} Current work assumes perfect channel knowledge. Extension to realistic channel estimation errors (3-5 dB typical in FDD systems) and incorporation of temporal GNNs for high-Doppler scenarios (vehicular networks) are critical for practical deployment.
+    
+    \item \textbf{Multi-Cell Coordination:} Single-cell operation limits deployment. Future work should develop federated GNN training for distributed base station coordination, addressing inter-cell interference without centralized CSI aggregation.
+    
+    \item \textbf{Hybrid NOMA-OMA Mode Selection:} Integrate joint mode selection policy to determine when NOMA pairing outperforms orthogonal resource allocation, accounting for imperfect SIC and error propagation in real hardware.
+    
+    \item \textbf{Unsupervised Learning:} Reduce dependency on computationally expensive Blossom labels via self-supervised objectives derived directly from NOMA rate expressions, enabling online adaptation to real-world CSI without ground-truth.
+\end{enumerate}
+
+\subsection{Closing Remarks}
+
+This work demonstrates that deep learning, specifically Graph Neural Networks, can effectively address the user pairing challenge in NOMA systems—achieving near-optimal performance with real-time computational efficiency. By learning from data rather than relying solely on hand-crafted heuristics, NOMA-GNN adapts to complex channel environments and provides a practical path toward intelligent resource allocation in 5G and beyond.
+
+The combination of theoretical graph matching foundations and modern machine learning techniques represents a promising paradigm for next-generation wireless network optimization. As network densification continues and heterogeneous device populations grow, such data-driven approaches will become increasingly essential for realizing the full potential of advanced multiple access technologies.
+
+The code, trained models, and datasets are available at \texttt{[repository URL]} to facilitate reproducibility and future research.

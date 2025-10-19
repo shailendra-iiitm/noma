@@ -1,0 +1,279 @@
+\chapter{Dataset Specifications}
+\label{app:dataset}
+
+\section{CSV File Format}
+
+\subsection{Scenario Features}
+Each row represents one user in one scenario.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Description} \\
+\midrule
+scenario\_id & int & Unique scenario identifier (0-49999) \\
+user\_id & int & User index within scenario (0 to N-1) \\
+h & float & Channel gain (linear scale) \\
+x & float & X-coordinate (meters) \\
+y & float & Y-coordinate (meters) \\
+d & float & 2D distance to BS (meters) \\
+theta & float & Angle from BS (radians) \\
+N & int & Number of users in scenario \\
+\bottomrule
+\end{tabular}
+\caption{User Feature Columns}
+\end{table}
+
+\subsection{Pairing Labels}
+Stored in separate CSV with edge annotations.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Description} \\
+\midrule
+scenario\_id & int & Scenario identifier \\
+user\_i & int & First user in pair \\
+user\_j & int & Second user in pair \\
+label & int & 1 if optimal pair, 0 otherwise \\
+sumrate & float & Sum-rate of pair (bps/Hz) \\
+power\_i & float & Power allocated to user i (Watts) \\
+power\_j & float & Power allocated to user j (Watts) \\
+\bottomrule
+\end{tabular}
+\caption{Edge Label Columns}
+\end{table}
+
+\section{Data Statistics}
+
+\subsection{User Distribution}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{N (Users)} & \textbf{Scenarios} & \textbf{Total Users} & \textbf{Total Edges} \\
+\midrule
+4 & 10,000 & 40,000 & 60,000 \\
+6 & 10,000 & 60,000 & 150,000 \\
+8 & 10,000 & 80,000 & 280,000 \\
+10 & 10,000 & 100,000 & 450,000 \\
+12 & 10,000 & 120,000 & 660,000 \\
+\midrule
+\textbf{Total} & \textbf{50,000} & \textbf{400,000} & \textbf{1,600,000} \\
+\bottomrule
+\end{tabular}
+\caption{Dataset Composition}
+\end{table}
+
+\subsection{Feature Ranges}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Feature} & \textbf{Min} & \textbf{Max} & \textbf{Mean} & \textbf{Std} \\
+\midrule
+$h$ (channel gain) & $1.2 \times 10^{-13}$ & $3.8 \times 10^{-9}$ & $4.2 \times 10^{-11}$ & $8.7 \times 10^{-11}$ \\
+$h_{dB}$ & -128.2 & -84.2 & -103.8 & 10.6 \\
+$x$ (m) & -4998 & 4997 & 0.3 & 2884 \\
+$y$ (m) & -4996 & 4999 & -1.2 & 2882 \\
+$d$ (m) & 10.5 & 5000 & 3536 & 1621 \\
+$\theta$ (rad) & 0 & $2\pi$ & 3.14 & 1.81 \\
+\bottomrule
+\end{tabular}
+\caption{Feature Statistics}
+\end{table}
+
+\subsection{Label Distribution}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Label} & \textbf{Count} & \textbf{Percentage} \\
+\midrule
+Positive pairs (label=1) & 200,000 & 12.5\% \\
+Negative pairs (label=0) & 1,400,000 & 87.5\% \\
+\midrule
+\textbf{Total edges} & \textbf{1,600,000} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\caption{Pairing Label Distribution}
+\end{table}
+
+\textbf{Note:} Class imbalance (12.5\% positive) addressed via hard negative sampling during training.
+
+\subsection{Sum-Rate Distribution}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Metric} & \textbf{Min} & \textbf{Max} & \textbf{Mean} & \textbf{Std} \\
+\midrule
+Sum-rate (bps/Hz) & 0.12 & 28.7 & 12.4 & 5.8 \\
+\bottomrule
+\end{tabular}
+\caption{Sum-Rate Statistics (Positive Pairs Only)}
+\end{table}
+
+\subsection{Power Allocation}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{User Type} & \textbf{Min (W)} & \textbf{Max (W)} & \textbf{Mean (W)} & \textbf{Std (W)} \\
+\midrule
+Near user (stronger) & 0.08 & 0.45 & 0.22 & 0.09 \\
+Far user (weaker) & 0.55 & 0.92 & 0.78 & 0.09 \\
+\midrule
+Total (per pair) & 1.0 & 1.0 & 1.0 & 0.0 \\
+\bottomrule
+\end{tabular}
+\caption{Power Allocation Statistics}
+\end{table}
+
+\section{Normalization Scheme}
+
+\subsection{Input Features}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Feature} & \textbf{Normalization} \\
+\midrule
+$h$ & $h_{norm} = \log_{10}(h)$ (convert to dB scale) \\
+$x, y$ & StandardScaler: $z = (x - \mu) / \sigma$ \\
+$d$ & Min-Max: $d_{norm} = d / 5000$ \\
+$\theta$ & Already in $[0, 2\pi]$, use as-is \\
+\bottomrule
+\end{tabular}
+\caption{Feature Normalization}
+\end{table}
+
+\subsection{Output Labels}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Label} & \textbf{Normalization} \\
+\midrule
+Pairing (0/1) & No normalization (binary classification) \\
+Sum-rate & Min-Max: $r_{norm} = r / 30$ (assume max 30 bps/Hz) \\
+Power & Already in $[0, 1]$ (fractional power) \\
+\bottomrule
+\end{tabular}
+\caption{Label Normalization}
+\end{table}
+
+\section{Data Splits}
+
+\subsection{Split Strategy}
+
+\begin{itemize}
+    \item \textbf{Random scenario split:} Scenarios randomly assigned to train/val/test
+    \item \textbf{Stratified by N:} Ensure balanced user counts across splits
+    \item \textbf{No data leakage:} All users/edges from same scenario in same split
+\end{itemize}
+
+\subsection{Split Sizes}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Split} & \textbf{Scenarios} & \textbf{Users} & \textbf{Edges} \\
+\midrule
+Train & 35,000 & 280,000 & 1,120,000 \\
+Validation & 7,500 & 60,000 & 240,000 \\
+Test & 7,500 & 60,000 & 240,000 \\
+\bottomrule
+\end{tabular}
+\caption{Final Data Splits}
+\end{table}
+
+\section{Sample Data}
+
+\subsection{Example Scenario (N=4)}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{rrrrrr}
+\toprule
+\textbf{UserID} & \textbf{h (dB)} & \textbf{x (m)} & \textbf{y (m)} & \textbf{d (m)} & \textbf{$\theta$ (rad)} \\
+\midrule
+0 & -98.3 & 1247 & -2318 & 2632 & 5.21 \\
+1 & -112.7 & -3421 & 1832 & 3876 & 2.64 \\
+2 & -106.4 & 782 & 3104 & 3201 & 1.32 \\
+3 & -95.1 & 2105 & 1689 & 2706 & 0.68 \\
+\bottomrule
+\end{tabular}
+\caption{Sample User Features}
+\end{table}
+
+\subsection{Optimal Pairing}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ccrrr}
+\toprule
+\textbf{User i} & \textbf{User j} & \textbf{Sum-Rate} & \textbf{$P_i$} & \textbf{$P_j$} \\
+\midrule
+0 & 1 & 14.2 bps/Hz & 0.31 W & 0.69 W \\
+3 & 2 & 16.8 bps/Hz & 0.27 W & 0.73 W \\
+\bottomrule
+\end{tabular}
+\caption{Blossom-Optimal Pairs}
+\end{table}
+
+\section{Data Generation Pipeline}
+
+\begin{enumerate}
+    \item \textbf{User Placement:} Uniform random in circular cell (radius 5000 m)
+    \item \textbf{Channel Generation:} 3GPP UMa model (LOS/NLOS, shadowing, fading)
+    \item \textbf{Optimal Pairing:} Blossom maximum-weight matching
+    \item \textbf{Power Optimization:} Bisection search for each pair
+    \item \textbf{Negative Sampling:} Hard negatives via top-K non-paired edges
+    \item \textbf{Serialization:} Save to CSV with normalized features
+\end{enumerate}
+
+\section{Data Validation}
+
+\subsection{Validation Checks}
+
+\begin{itemize}
+    \item \textbf{Channel consistency:} All $h_i > 0$
+    \item \textbf{Distance bounds:} $10 \leq d_i \leq 5000$ m
+    \item \textbf{Power constraint:} $P_i + P_j = 1$ W for all pairs
+    \item \textbf{SIC feasibility:} $|h_i - h_j| \geq 8$ dB for all positive pairs
+    \item \textbf{No duplicate scenarios:} All scenario IDs unique
+    \item \textbf{Balanced splits:} User counts uniformly distributed across splits
+\end{itemize}
+
+\subsection{Validation Results}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Check} & \textbf{Pass Rate} \\
+\midrule
+Valid channel gains & 100\% \\
+Valid distances & 100\% \\
+Power sum = 1.0 W & 100\% \\
+SIC constraint satisfied & 98.7\% \\
+No duplicates & 100\% \\
+Balanced user counts & 100\% \\
+\bottomrule
+\end{tabular}
+\caption{Dataset Validation Results}
+\end{table}
+
+\textbf{Note:} 1.3\% SIC violations due to numerical precision; filtered before training.

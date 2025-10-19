@@ -1,0 +1,53 @@
+\chapter{System Model}
+\label{chap:system}
+
+\section{Network Architecture}
+
+\subsection{Base Station Configuration}
+\begin{itemize}
+    \item Single-antenna transmitter at height $h_{BS} = 25$ m
+    \item Total transmit power: $P = 1.0$ W (30 dBm)
+    \item Carrier frequency: $f_c = 3.5$ GHz (5G NR band n78)
+    \item Bandwidth: $B = 20$ MHz per PRB
+    \item Noise power spectral density: $-174$ dBm/Hz
+    \item Noise power: $\sigma^2 = kTB = 10^{-9}$ W
+\end{itemize}
+
+\subsection{User Equipment}
+\begin{itemize}
+    \item $N$ single-antenna receivers
+    \item Perfect SIC capability
+    \item Perfect CSI feedback to BS
+\end{itemize}
+
+\section{NOMA Protocol}
+
+\subsection{Resource Allocation}
+\begin{enumerate}
+    \item BS collects CSI from all users
+    \item Pairing algorithm groups users into pairs
+    \item Power allocation determines $\alpha$ for each pair
+    \item Superposed signals transmitted on each PRB
+\end{enumerate}
+
+\subsection{Decoding Order}
+\begin{itemize}
+    \item Weak users decode directly (treating strong user as noise)
+    \item Strong users decode weak user first, perform SIC, then decode own signal
+\end{itemize}
+
+\section{Performance Metrics}
+
+\subsection{Sum-Rate}
+System-wide achievable rate:
+\begin{equation}
+R_{total} = \sum_{\text{all pairs} (i,j)} (R_i + R_j)
+\end{equation}
+
+\subsection{Average User Rate}
+\begin{equation}
+\bar{R} = \frac{1}{N_{paired}} \sum_{i=1}^{N_{paired}} R_i
+\end{equation}
+
+\subsection{Computational Time}
+Wall-clock time for pairing algorithm execution (excluding power optimization).

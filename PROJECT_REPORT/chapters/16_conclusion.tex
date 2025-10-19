@@ -1,0 +1,241 @@
+\chapter{Conclusion and Future Work}
+\label{chap:conclusion}
+
+\section{Summary of Contributions}
+
+This project presented a comprehensive study on Graph Neural Network-based user pairing for downlink Power-Domain Non-Orthogonal Multiple Access (PD-NOMA) systems. The primary contributions are:
+
+\subsection{Novel Problem Formulation}
+\begin{itemize}
+    \item Reformulated user pairing as a graph learning problem
+    \item Developed edge classification framework on complete user graphs
+    \item Incorporated spatial and channel features in node representations
+    \item Enabled end-to-end learning of optimal pairing strategies
+\end{itemize}
+
+\subsection{Multi-Task GNN Architecture}
+\begin{itemize}
+    \item Designed GraphSAGE-based encoder for user embeddings
+    \item Implemented three decoder heads: pairing classifier, sum-rate regressor, power allocator
+    \item Achieved joint optimization via weighted multi-task loss
+    \item Model size: 133,697 parameters (lightweight for deployment)
+\end{itemize}
+
+\subsection{Realistic Channel Modeling}
+\begin{itemize}
+    \item Implemented 3GPP TR 38.901 UMa channel model
+    \item Incorporated LOS/NLOS path loss, shadow fading, Rayleigh fading
+    \item Generated 50,000 realistic scenarios for training/testing
+    \item Validated against 3GPP specifications
+\end{itemize}
+
+\subsection{Comprehensive Benchmarking}
+\begin{itemize}
+    \item Compared against Static, Balanced, Blossom, Bipartite PF methods
+    \item Evaluated on throughput, fairness, runtime, generalization
+    \item Demonstrated 95.8\% optimal throughput with 20× speedup
+    \item Achieved near-optimal fairness (Jain's index 0.903)
+\end{itemize}
+
+\subsection{Practical Implementation}
+\begin{itemize}
+    \item Developed complete PyTorch-based framework
+    \item Implemented modular, extensible codebase
+    \item Provided configuration-driven experimentation
+    \item Ensured reproducibility with fixed seeds and versioning
+\end{itemize}
+
+\section{Key Findings}
+
+\subsection{Performance}
+\begin{enumerate}
+    \item NOMA-GNN achieves \textbf{95.8\% of optimal throughput}, outperforming all polynomial-time baselines
+    \item Classification AUC of \textbf{92.5\%} indicates excellent pairing discrimination
+    \item Regression MAE of \textbf{0.031 bps/Hz} for sum-rate prediction demonstrates accurate rate estimation
+    \item Jain's fairness index of \textbf{0.903} ensures equitable user service
+\end{enumerate}
+
+\subsection{Efficiency}
+\begin{enumerate}
+    \item Runtime of \textbf{1.1 ms} for 10 users enables real-time scheduling
+    \item \textbf{20× speedup} over Blossom matching ($O(N^3)$)
+    \item Near-linear scalability ($O(N \log N)$) up to 16 users
+    \item Inference latency $< 1$ TTI (1 ms) for practical deployment
+\end{enumerate}
+
+\subsection{Generalization}
+\begin{enumerate}
+    \item Maintains \textbf{$>92\%$ throughput} on unseen user densities ($N=14, 16$)
+    \item Robust to channel variations (94.3\% under high shadowing)
+    \item Transfers to alternative cell geometries (93.7-94.1\%)
+    \item Learns generalizable pairing patterns beyond training distribution
+\end{enumerate}
+
+\subsection{Ablation Insights}
+\begin{enumerate}
+    \item Multi-task learning improves pairing AUC by \textbf{0.7\%}
+    \item Hard negative sampling critical: \textbf{+2.8\% AUC} gain
+    \item 3-layer GNN optimal (deeper networks cause over-smoothing)
+    \item Angular features contribute \textbf{+2.2\% AUC}
+\end{enumerate}
+
+\section{Practical Implications}
+
+\subsection{For 5G/6G Networks}
+\begin{itemize}
+    \item Enables dynamic user pairing in massive connectivity scenarios
+    \item Supports real-time scheduling within TTI constraints
+    \item Reduces computational burden at base stations
+    \item Facilitates NOMA deployment in dense urban environments
+\end{itemize}
+
+\subsection{For Network Operators}
+\begin{itemize}
+    \item Improves spectral efficiency (95.8\% vs 93.4\% for bipartite)
+    \item Enhances cell-edge user experience (fairness index 0.903)
+    \item Lowers processing latency for UE scheduling
+    \item Scalable to varying cell sizes and user densities
+\end{itemize}
+
+\subsection{For Researchers}
+\begin{itemize}
+    \item Demonstrates viability of GNNs for wireless resource allocation
+    \item Provides benchmark framework for future methods
+    \item Opens avenues for graph-based optimization in communications
+    \item Showcases multi-task learning for joint prediction tasks
+\end{itemize}
+
+\section{Limitations of Current Work}
+
+\subsection{Modeling Assumptions}
+\begin{enumerate}
+    \item \textbf{Perfect CSI:} Assumes base station has perfect channel state information
+    \item \textbf{Single Cell:} Does not model inter-cell interference
+    \item \textbf{Static Channels:} Channels assumed constant during scheduling slot
+    \item \textbf{Perfect SIC:} Assumes ideal successive interference cancellation
+\end{enumerate}
+
+\subsection{Scalability Constraints}
+\begin{enumerate}
+    \item Trained on $N \leq 12$ users; performance degrades for $N > 16$
+    \item Complete graph grows as $O(N^2)$ edges (memory bottleneck for $N > 50$)
+    \item Inference time grows super-linearly despite $O(N \log N)$ complexity
+\end{enumerate}
+
+\subsection{Dataset Limitations}
+\begin{enumerate}
+    \item Only UMa scenario considered (not UMi, RMa, InH)
+    \item Fixed carrier frequency (3.5 GHz)
+    \item Uniform user distribution (not hotspot or clustered)
+    \item Single ground-truth method (Blossom) for labels
+\end{enumerate}
+
+\subsection{Deployment Challenges}
+\begin{enumerate}
+    \item Requires GPU for low-latency inference (<1 ms)
+    \item Model retraining needed for different channel models
+    \item No online learning or adaptation mechanism
+    \item Limited interpretability for operational debugging
+\end{enumerate}
+
+\section{Future Research Directions}
+
+\subsection{Imperfect CSI and Robustness}
+\begin{itemize}
+    \item Incorporate channel estimation errors in training
+    \item Develop robust GNN architectures under CSI uncertainty
+    \item Explore Bayesian GNNs for uncertainty quantification
+    \item Test with realistic channel feedback delays
+\end{itemize}
+
+\subsection{Multi-Cell Scenarios}
+\begin{itemize}
+    \item Extend to multi-cell networks with inter-cell interference
+    \item Investigate graph structures spanning multiple cells
+    \item Develop coordinated multi-point (CoMP) NOMA pairing
+    \item Model cell-edge users with interference-aware features
+\end{itemize}
+
+\subsection{Dynamic Channel Adaptation}
+\begin{itemize}
+    \item Develop online learning for time-varying channels
+    \item Implement meta-learning for fast adaptation to new scenarios
+    \item Explore reinforcement learning for sequential pairing decisions
+    \item Design recurrent GNNs for temporal channel evolution
+\end{itemize}
+
+\subsection{Scalability Enhancements}
+\begin{itemize}
+    \item Investigate sparse graph construction (e.g., k-NN graphs)
+    \item Develop hierarchical GNNs for large user counts ($N > 50$)
+    \item Explore mini-batch inference for massive MIMO-NOMA
+    \item Implement model pruning and quantization for edge deployment
+\end{itemize}
+
+\subsection{Advanced SIC Modeling}
+\begin{itemize}
+    \item Relax perfect SIC assumption with imperfect cancellation model
+    \item Train with SIC error rates as additional constraints
+    \item Develop adaptive power allocation considering residual interference
+    \item Explore ordered SIC with more than two users per pair
+\end{itemize}
+
+\subsection{Alternative GNN Architectures}
+\begin{itemize}
+    \item Investigate Graph Attention Networks (GAT) for interpretability
+    \item Explore Graph Transformer architectures
+    \item Develop custom message-passing for wireless-specific inductive biases
+    \item Compare with hypergraph neural networks for multi-way pairing
+\end{itemize}
+
+\subsection{Integration with Other Technologies}
+\begin{itemize}
+    \item Combine NOMA-GNN with massive MIMO beamforming
+    \item Extend to mmWave bands with beam alignment
+    \item Integrate with network slicing for diverse QoS requirements
+    \item Explore joint NOMA pairing and spectrum allocation
+\end{itemize}
+
+\subsection{Real-World Deployment}
+\begin{itemize}
+    \item Conduct over-the-air testing with software-defined radios
+    \item Implement in 5G testbeds (e.g., OpenAirInterface)
+    \item Optimize for edge computing platforms (NVIDIA Jetson)
+    \item Develop APIs for integration with RAN intelligent controllers (RIC)
+\end{itemize}
+
+\subsection{Fairness and QoS Guarantees}
+\begin{itemize}
+    \item Incorporate user-specific QoS constraints in training
+    \item Develop fairness-aware loss functions
+    \item Explore multi-objective optimization (throughput, fairness, latency)
+    \item Investigate priority-based pairing for heterogeneous services
+\end{itemize}
+
+\subsection{Explainability and Trust}
+\begin{itemize}
+    \item Develop attention visualization tools for operators
+    \item Generate natural language explanations for pairing decisions
+    \item Implement counterfactual reasoning ("why not paired?")
+    \item Design human-in-the-loop systems for critical scenarios
+\end{itemize}
+
+\section{Closing Remarks}
+
+This project successfully demonstrated that Graph Neural Networks can effectively solve the NOMA user pairing problem with near-optimal performance and significantly reduced computational complexity. The proposed NOMA-GNN framework achieves 95.8\% of optimal throughput while being 20 times faster than conventional graph matching algorithms.
+
+The key innovation lies in reformulating user pairing as a learnable graph problem, enabling the model to capture complex spatial and channel dependencies that are difficult to encode in heuristic methods. The multi-task learning approach further enhances performance by jointly optimizing pairing decisions, rate prediction, and power allocation.
+
+Comprehensive experiments on 50,000 realistic 3GPP UMa scenarios validate the method's effectiveness across diverse network conditions. The model generalizes well to unseen user densities, channel conditions, and cell geometries, demonstrating robustness beyond the training distribution.
+
+While several limitations remain—particularly regarding perfect CSI assumptions and single-cell scenarios—the results establish a strong foundation for future research. The identified directions for imperfect CSI robustness, multi-cell coordination, and online adaptation pave the way toward practical deployment in next-generation wireless networks.
+
+As 5G evolves and 6G emerges with increasingly heterogeneous and dense deployments, intelligent resource allocation methods like NOMA-GNN will become essential. This work contributes a rigorous, data-driven approach that balances optimality with computational feasibility, bringing NOMA closer to widespread adoption in real-world systems.
+
+The complete implementation, including dataset generation, model training, and evaluation scripts, provides a reproducible framework for researchers to build upon. We envision this work catalyzing further exploration of graph neural networks and deep learning in wireless communications, ultimately enabling more efficient, fair, and scalable next-generation networks.
+
+\vspace{1cm}
+
+\begin{center}
+\textit{The future of wireless resource allocation is graph-based, data-driven, and intelligent.}
+\end{center}

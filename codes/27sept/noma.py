@@ -29,6 +29,7 @@ PF_EPS = 1e-12              # Small epsilon for PF logs to avoid -inf
 POWER_OPT_TOL = 1e-4        # Tolerance for 1-D power optimizer
 POWER_OPT_MAXIT = 80        # Maximum iterations for 1-D power optimizer
 CHANNEL_GAIN_EPS = 1e-12    # Small epsilon for channel gain log calculation
+STD_THRESHOLD = 1.0         # Standard deviation threshold for adaptive bipartite classification
 # ================================================================================
 
 # Create timestamped results directory
@@ -82,7 +83,7 @@ def PL_UMa_NLOS(d_3D, fc, h_UT):
             0.6 * (h_UT - 1.5))
 
 # -------------------- Generate Path Loss for Each User --------------------
-d_3D = np.sqrt(r**2 + (h_BS - h_UTs)**2)
+d_3D = np.sqrt(r*2 + (h_BS - h_UTs)*2)
 P_LOS_users = prob_LOS_UMa(r, h_UTs)
 
 PL_dB = np.zeros(N)
@@ -557,11 +558,12 @@ def perform_clustering(pairs_indices, name, power_opt=False, objective='sum', w1
         'noma_coverage': (noma_pairs_count * 2)/N*100
     }
 
-# ==================== NEW: PF-weighted strong–weak bipartite matching ====================
+# ==================== PF-weighted strong–weak bipartite matching ====================
 def build_bipartite_pf_matching(theta_min_deg=THETA_MIN_DEG):
     """
     Build a bipartite graph (weak ↔ strong) with PF weights and angular guard,
-    then run max-weight matching. Returns list of (u, v) matched indices.
+    then run max-weight matching. Uses fixed half-half split.
+    Returns list of (u, v) matched indices.
     """
     theta_min_rad = np.deg2rad(theta_min_deg)
 
@@ -585,6 +587,69 @@ def build_bipartite_pf_matching(theta_min_deg=THETA_MIN_DEG):
                 G.add_edge(i, j, weight=w)
 
     matching = nx.max_weight_matching(G, maxcardinality=True)
+    return list(matching)
+
+def build_adaptive_bipartite_pf_matching(theta_min_deg=THETA_MIN_DEG, std_threshold=1.0):
+    """
+    IMPROVED: Build a bipartite graph using standard deviation to classify strong/weak users.
+    This approach is more adaptive and computationally efficient than fixed half-half split.
+    
+    Args:
+        theta_min_deg: Angular guard in degrees
+        std_threshold: Threshold in standard deviations from mean to classify strong/weak
+                      (users with h_db > mean + std_threshold*std are strong)
+    
+    Returns:
+        List of (u, v) matched indices
+    """
+    theta_min_rad = np.deg2rad(theta_min_deg)
+    
+    # Calculate mean and standard deviation of channel gains (in dB)
+    h_mean = np.mean(h_db)
+    h_std = np.std(h_db)
+    
+    # Classify users based on standard deviation
+    strong_threshold = h_mean + std_threshold * h_std
+    weak_threshold = h_mean - std_threshold * h_std
+    
+    # Get strong and weak user indices
+    strong_users = [i for i in range(N) if h_db[i] >= strong_threshold]
+    weak_users = [i for i in range(N) if h_db[i] <= weak_threshold]
+    
+    print(f"\nAdaptive Bipartite Classification:")
+    print(f"Channel gain mean: {h_mean:.2f} dB, std: {h_std:.2f} dB")
+    print(f"Strong users (≥{strong_threshold:.2f} dB): {len(strong_users)}")
+    print(f"Weak users (≤{weak_threshold:.2f} dB): {len(weak_users)}")
+    print(f"Middle users: {N - len(strong_users) - len(weak_users)}")
+    
+    # Build bipartite graph between strong and weak users only
+    G = nx.Graph()
+    edge_count = 0
+    
+    for i in weak_users:
+        for j in strong_users:
+            # Angular guard
+            if angle_diff_rad(theta[i], theta[j]) < theta_min_rad:
+                continue
+            
+            # SIC guard (weak user always has lower channel gain)
+            h1, h2 = h_values[i], h_values[j]  # i is weak, j is strong, so h1 < h2
+            if not sic_satisfied(h1, h2):
+                continue
+            
+            # PF weight using seed rates from baseline split
+            _, _, R1, R2, _ = calc_pair_rate(h1, h2)
+            w = np.log(R1 + PF_EPS) + np.log(R2 + PF_EPS)
+            if np.isfinite(w):
+                G.add_edge(i, j, weight=w)
+                edge_count += 1
+    
+    print(f"Bipartite graph: {len(weak_users) + len(strong_users)} nodes, {edge_count} edges")
+    
+    # Run maximum weight matching
+    matching = nx.max_weight_matching(G, maxcardinality=True)
+    
+    print(f"Matched pairs: {len(matching)}")
     return list(matching)
 
 # -------------------- Main Execution with Visualizations --------------------
@@ -637,13 +702,22 @@ print(f"Graph created with {G.number_of_nodes()} nodes and {G.number_of_edges()}
 blossom_indices = list(nx.max_weight_matching(G, maxcardinality=True))
 clustering_results['blossom'] = perform_clustering(blossom_indices, "blossom")
 
-# -------------------- PF Bipartite (strong-weak) --------------------
+# -------------------- PF Bipartite (strong-weak) - Original --------------------
 print("\n" + "="*50)
-print("PF Bipartite (strong-weak) Matching with Angular Guard")
+print("PF Bipartite (strong-weak) Matching with Angular Guard - Original")
 bp_pairs = build_bipartite_pf_matching(theta_min_deg=THETA_MIN_DEG)
 print(f"PF Bipartite candidate matches: {len(bp_pairs)}")
 clustering_results['bipartite_pf'] = perform_clustering(
     bp_pairs, "bipartite_pf", power_opt=True, objective='pf'
+)
+
+# -------------------- Adaptive PF Bipartite (std-dev based) --------------------
+print("\n" + "="*50)
+print("Adaptive PF Bipartite Matching using Standard Deviation Classification")
+adaptive_bp_pairs = build_adaptive_bipartite_pf_matching(theta_min_deg=THETA_MIN_DEG, std_threshold=STD_THRESHOLD)
+print(f"Adaptive Bipartite candidate matches: {len(adaptive_bp_pairs)}")
+clustering_results['adaptive_bipartite_pf'] = perform_clustering(
+    adaptive_bp_pairs, "adaptive_bipartite_pf", power_opt=True, objective='pf'
 )
 
 # -------------------- Generate Comparison Plots --------------------
@@ -657,17 +731,30 @@ print("SIMULATION SUMMARY")
 print("="*60)
 
 for method, results in clustering_results.items():
-    print(f"\n{method.upper()} CLUSTERING:")
+    print(f"\n{method.upper().replace('_', ' ')} CLUSTERING:")
     print(f"  - NOMA Pairs: {results['noma_pairs']}")
     print(f"  - OMA Users: {results['oma_users']}")
     print(f"  - Total Throughput: {results['total_throughput']:.2f} Mbps")
     print(f"  - NOMA Coverage: {results['noma_coverage']:.1f}%")
+    if method == 'adaptive_bipartite_pf':
+        print(f"  - Computational Benefit: Reduced graph size using std-dev classification")
 
 # Find best performing method
 best_method = max(clustering_results.keys(),
                  key=lambda x: clustering_results[x]['total_throughput'])
-print(f"\nBEST PERFORMING METHOD: {best_method.upper()}")
+print(f"\nBEST PERFORMING METHOD: {best_method.upper().replace('_', ' ')}")
 print(f"Throughput: {clustering_results[best_method]['total_throughput']:.2f} Mbps")
+
+# Compare bipartite methods
+if 'bipartite_pf' in clustering_results and 'adaptive_bipartite_pf' in clustering_results:
+    original_tp = clustering_results['bipartite_pf']['total_throughput']
+    adaptive_tp = clustering_results['adaptive_bipartite_pf']['total_throughput']
+    improvement = ((adaptive_tp - original_tp) / original_tp) * 100 if original_tp > 0 else 0
+    print(f"\n📊 BIPARTITE COMPARISON:")
+    print(f"Original Bipartite PF: {original_tp:.2f} Mbps")
+    print(f"Adaptive Bipartite PF: {adaptive_tp:.2f} Mbps")
+    print(f"Performance Change: {improvement:+.2f}%")
+    print(f"Computational Benefit: Adaptive method uses statistical classification")
 
 print(f"\nAll results and visualizations saved to '{results_dir}/' directory")
 print("Simulation completed successfully!")

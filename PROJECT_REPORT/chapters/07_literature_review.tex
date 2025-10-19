@@ -1,0 +1,192 @@
+\chapter{Literature Review}
+\label{chap:literature}
+
+This chapter surveys the evolution of multiple access techniques, user pairing strategies in NOMA systems, graph-theoretic optimization approaches, and the emergence of deep learning methods for wireless resource allocation.
+
+\section{Evolution of Multiple Access Techniques}
+
+\subsection{Traditional Orthogonal Multiple Access}
+
+Multiple access schemes determine how users share wireless resources. Classical OMA techniques include:
+
+\begin{itemize}
+    \item \textbf{FDMA:} Users occupy distinct frequency bands. Simple but spectrally inefficient, used in 1G analog systems (AMPS).
+    
+    \item \textbf{TDMA:} Users transmit in different time slots. Adopted in 2G GSM with improved capacity over FDMA.
+    
+    \item \textbf{CDMA:} Users share time-frequency but use orthogonal codes. Deployed in 3G WCDMA and cdma2000 systems.
+    
+    \item \textbf{OFDMA:} Combines FDMA and TDMA on subcarriers. Standard in 4G LTE and 5G NR, achieving high spectral efficiency through adaptive modulation.
+\end{itemize}
+
+While OMA eliminates intra-cell interference, it suffers from:
+\begin{enumerate}
+    \item \textbf{Resource Underutilization:} Users with good channels waste bandwidth while maintaining orthogonality.
+    \item \textbf{Fairness-Efficiency Trade-off:} Allocating resources to weak users reduces overall throughput.
+    \item \textbf{Scalability Limits:} Number of orthogonal resources limits simultaneous users.
+\end{enumerate}
+
+\subsection{Non-Orthogonal Multiple Access}
+
+NOMA overcomes these limitations by allowing controlled interference. Two main variants exist:
+
+\begin{enumerate}
+    \item \textbf{Power-Domain NOMA:} Users share resources via power multiplexing. Strong users perform SIC to decode weak users' signals first. This is the focus of our work.
+    
+    \item \textbf{Code-Domain NOMA:} Uses non-orthogonal spreading codes (e.g., SCMA, MUSA). Requires advanced multi-user detection.
+\end{enumerate}
+
+Islam et al. (2016) \cite{islam2016} provided a comprehensive survey demonstrating NOMA's potential for 30-50\% capacity improvement over OMA. The 3GPP standardization in Release 15 (LTE-A Pro) under the name "Multi-User Superposition Transmission" (MUST) validates its practical importance.
+
+\section{User Pairing Strategies in NOMA}
+
+\subsection{Heuristic Approaches}
+
+Early NOMA research employed simple heuristic rules:
+
+\begin{description}
+    \item[Static Pairing:] Sorts users by channel gain and pairs strongest with weakest. Maximizes channel disparity for SIC but ignores spatial correlation.
+    
+    \item[Balanced Pairing:] Divides users into upper and lower halves by channel quality, pairing one from each. Improves fairness at slight throughput cost.
+    
+    \item[Random Pairing:] Pairs users randomly. Serves as performance lower bound.
+\end{description}
+
+Su et al. (2017) \cite{su2017} analyzed these methods, showing static pairing achieves 70-80\% of optimal throughput with O(N log N) complexity but performs poorly under non-uniform user distributions.
+
+\subsection{Optimization-Based Methods}
+
+\subsubsection{Convex Optimization}
+
+Many works formulate pairing as a constrained optimization problem. Hoang et al. (2019) proposed joint power allocation and user pairing via alternating optimization, solving power allocation in closed form and iterating over discrete pairing decisions. Convergence is guaranteed but computational cost is O(N² iterations).
+
+\subsubsection{Graph-Theoretic Approaches}
+
+Recognizing pairing as a combinatorial problem, researchers adopted graph matching:
+
+\begin{itemize}
+    \item \textbf{Maximum Weight Matching:} Jia et al. (2018) \cite{jia2018} formulated users as graph nodes with edge weights representing sum-rates. The Blossom algorithm (Edmonds, 1965) \cite{edmonds1965} finds optimal general graph matching in O(N³) time, achieving theoretical optimality but limiting scalability.
+    
+    \item \textbf{Bipartite Matching:} Dividing users into "strong" and "weak" sets creates a bipartite graph. The Hungarian algorithm (Kuhn, 1955) \cite{kuhn1955} solves assignment in O(N³), with tighter practical bounds. Zhang et al. (2023) \cite{sensors2023} incorporated proportional fairness weights, balancing throughput and equity.
+    
+    \item \textbf{Conflict Graphs:} Köse et al. (2021) \cite{kose2021graph} modeled incompatible pairings (violating SIC constraints) as edges in a conflict graph, proving it is claw-free. This enables polynomial-time Maximum Weighted Independent Set (MWIS) solutions.
+\end{itemize}
+
+\subsubsection{IoT-Specific Extensions}
+
+Mishra et al. (2021, 2022) \cite{mishra2021maximizing, mishra2022connection} extended bipartite matching to NB-IoT scenarios with:
+\begin{itemize}
+    \item \textbf{Connection Density Maximization:} MWFMP algorithm assigns users to frequency-SIC combinations under per-PRB power constraints.
+    \item \textbf{Deadline-Aware Scheduling:} CTMBM scheme incorporates device deadlines and priority classes for uplink grant-based transmission.
+\end{itemize}
+
+These works demonstrate graph matching achieves near-optimal performance (92-95\% of exhaustive search) with acceptable complexity for N < 50.
+
+\subsection{Limitations of Traditional Methods}
+
+Despite their effectiveness, traditional approaches face challenges:
+
+\begin{enumerate}
+    \item \textbf{Computational Complexity:} O(N³) scaling prohibits real-time use for N > 100.
+    \item \textbf{Static Assumptions:} Fixed pairing rules don't adapt to varying channel statistics.
+    \item \textbf{Separate Stages:} Pairing and power allocation are often decoupled, yielding suboptimal joint solutions.
+    \item \textbf{Manual Feature Engineering:} Requires domain expertise to design edge weights and constraints.
+\end{enumerate}
+
+\section{Deep Learning for Wireless Networks}
+
+\subsection{Supervised Learning Approaches}
+
+Sun et al. (2018) \cite{sun2018learning} pioneered learning power control by training DNNs on solutions from convex optimization. Their "Learning to Optimize" paradigm achieved 95\% optimal performance with 1000× speedup for spectrum sharing problems.
+
+He et al. (2020) \cite{he2020learning} extended this to multi-cell scenarios, demonstrating that learned policies generalize to different network densities through transfer learning.
+
+\subsection{Reinforcement Learning}
+
+Jiang et al. (2021) \cite{jiang2021joint} applied Deep Q-Networks (DQN) to joint NOMA pairing and power allocation. The agent learns policies through trial-and-error, achieving 88\% of optimal throughput after 10,000 training episodes. However, DRL requires extensive simulation interaction and suffers from reward engineering challenges.
+
+Naparstek et al. (2019) \cite{naparstek2019deep} proposed multi-task DRL for distributed spectrum access, showing shared representations improve sample efficiency.
+
+\subsection{Limitations of Existing DL Methods}
+
+\begin{itemize}
+    \item \textbf{Black-Box Nature:} Lack interpretability, hindering deployment in safety-critical applications.
+    \item \textbf{Constraint Satisfaction:} Often violate physical constraints (SIC, power budgets) requiring post-processing.
+    \item \textbf{Training Data Dependency:} Require large labeled datasets from expensive optimization solvers.
+    \item \textbf{Generalization:} Performance degrades significantly on out-of-distribution scenarios.
+\end{itemize}
+
+\section{Graph Neural Networks}
+
+\subsection{Foundations}
+
+GNNs extend deep learning to graph-structured data by learning node and edge representations through message passing. Key architectures include:
+
+\begin{description}
+    \item[Graph Convolutional Networks (GCN):] Kipf \& Welling (2017) introduced spectral convolutions via normalized adjacency matrices.
+    
+    \item[Graph Attention Networks (GAT):] Veličković et al. (2018) incorporated attention mechanisms for adaptive neighbor weighting.
+    
+    \item[GraphSAGE:] Hamilton et al. (2017) \cite{hamilton2017inductive} proposed inductive learning through neighborhood sampling and aggregation, enabling generalization to unseen nodes.
+\end{description}
+
+GraphSAGE's inductive capability is crucial for wireless networks where user populations and topologies vary dynamically.
+
+\subsection{GNNs for Wireless Communications}
+
+Recent applications demonstrate GNN effectiveness:
+
+\begin{itemize}
+    \item \textbf{Power Control:} Eisen et al. (2020) \cite{eisen2020optimal} modeled interference networks as conflict graphs, using GCNs to learn distributed power allocation achieving 95\% of centralized optimal.
+    
+    \item \textbf{Routing Optimization:} Rusek et al. (2020) \cite{rusek2020graph} developed RouteNet, a GNN predicting network performance metrics from routing configurations, enabling fast "what-if" analysis.
+    
+    \item \textbf{MIMO Beamforming:} Chowdhury et al. (2021) \cite{chowdhury2021unfolding} unfolded iterative WMMSE algorithms into GNN layers, combining optimization theory with learned representations.
+    
+    \item \textbf{Link Scheduling:} Shen et al. (2021) \cite{shen2021graph} formulated scheduling as edge classification on interference graphs, achieving near-optimal throughput with O(E log E) complexity.
+\end{itemize}
+
+\subsection{GNNs for NOMA}
+
+Limited prior work exists on GNN-based NOMA:
+
+\begin{itemize}
+    \item \textbf{Zhao et al. (2020):} Proposed GNN for V2V NOMA resource allocation, achieving 88\% optimal with 50× speedup. However, focused on vehicular mobility without SIC constraint modeling.
+    
+    \item \textbf{Wang et al. (2021):} Applied GATs to massive IoT uplink NOMA, prioritizing critical devices. Requires labeled data from exhaustive search, limiting scalability.
+\end{itemize}
+
+\section{Multi-Task Learning}
+
+Multi-task learning (MTL) improves generalization by sharing representations across related objectives. Caruana (1997) showed MTL acts as an implicit regularizer, preventing overfitting.
+
+In wireless contexts, Naparstek et al. (2019) \cite{naparstek2019deep} demonstrated joint power control and user association benefits from shared latent features. For NOMA, pairing decisions, sum-rate prediction, and power allocation are inherently coupled—optimal pairings depend on achievable rates, which depend on power splits.
+
+\section{Research Gaps}
+
+Despite extensive research, several gaps persist:
+
+\begin{enumerate}
+    \item \textbf{Scalability-Optimality Trade-off:} No existing method achieves both near-optimal performance and O(N log N) complexity.
+    
+    \item \textbf{Constraint-Aware Learning:} Most DL approaches ignore SIC feasibility and angular separation, requiring post-hoc corrections.
+    
+    \item \textbf{Joint Optimization:} Pairing and power allocation are typically decoupled; MTL for joint prediction remains unexplored.
+    
+    \item \textbf{Realistic Evaluation:} Many works use simplified path loss models instead of standardized 3GPP channels.
+    
+    \item \textbf{Generalization Analysis:} Limited empirical evidence of robustness to unseen scenarios.
+\end{enumerate}
+
+\section{Summary}
+
+This literature review establishes that:
+
+\begin{itemize}
+    \item Traditional graph matching provides strong baselines but suffers from O(N³) complexity.
+    \item Existing DL methods achieve speedups but often sacrifice optimality or violate constraints.
+    \item GNNs have proven effective for wireless optimization but remain underexplored for NOMA.
+    \item Multi-task learning can exploit coupling between pairing, rate, and power decisions.
+\end{itemize}
+
+Our work addresses these gaps by developing a GraphSAGE-based MTL framework that enforces constraints during graph construction, achieves 95.8\% optimal throughput with O(N log N) complexity, and demonstrates robust generalization—bridging the gap between optimization rigor and learning efficiency.
