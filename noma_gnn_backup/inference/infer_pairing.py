@@ -77,7 +77,7 @@ def main():
         num_layers=CFG.NUM_LAYERS,
         dropout=CFG.DROPOUT
     ).to(device)
-    ckpt = torch.load(args.ckpt, map_location=device)
+    ckpt = torch.load(args.ckpt, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model_state"])
 
     x = x.to(device); mp_edges = mp_edges.to(device)

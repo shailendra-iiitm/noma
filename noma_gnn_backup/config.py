@@ -20,7 +20,7 @@ class Config:
     # Candidate generation
     USE_ANGLE_GUARD: bool = True
     MIN_ANGLE_DEG: float = 25.0
-    TOPK_CANDIDATES_PER_NODE: int = 20    # pre-prune candidates per node before scoring (None for all feasible)
+    TOPK_CANDIDATES_PER_NODE: int = 2000    # pre-prune candidates per node before scoring (None for all feasible)
 
     # Model
     IN_CHANNELS: int = 5                  # distance_m, path_loss_dB, shadowing_dB, rayleigh_fading, h_dB
