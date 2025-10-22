@@ -212,7 +212,7 @@ Model size: 520 KB (FP32), suitable for edge deployment.
 
 \textbf{Ground Truth Labels:}
 \begin{enumerate}
-    \item Generate 50,000 user scenarios with $N \in \{4,6,8,10,12\}$
+    \item Generate 200 user scenarios with $N = 500$ users per scenario
     \item For each scenario:
     \begin{itemize}
         \item Run Blossom matching to get optimal pairs
@@ -225,9 +225,9 @@ Model size: 520 KB (FP32), suitable for edge deployment.
 
 \textbf{Data Split:}
 \begin{itemize}
-    \item Training: 35,000 scenarios (70\%)
-    \item Validation: 7,500 scenarios (15\%)
-    \item Test: 7,500 scenarios (15\%)
+    \item Training: 140 scenarios (70\%)
+    \item Validation: 30 scenarios (15\%)
+    \item Test: 30 scenarios (15\%)
 \end{itemize}
 
 \subsection{Hard Negative Sampling}
@@ -329,7 +329,7 @@ Weights determined via validation set hyperparameter search.
 
 \textbf{Learning Rate Scheduler:} ReduceLROnPlateau
 \begin{itemize}
-    \item Monitor: Validation AUC
+    \item Monitor: Validation loss
     \item Factor: 0.5 (halve LR on plateau)
     \item Patience: 10 epochs
     \item Minimum LR: $10^{-6}$
@@ -337,7 +337,7 @@ Weights determined via validation set hyperparameter search.
 
 \textbf{Early Stopping:}
 \begin{itemize}
-    \item Monitor: Validation AUC
+    \item Monitor: Validation loss
     \item Patience: 25 epochs
     \item Restore best model weights
 \end{itemize}
@@ -518,17 +518,6 @@ We apply t-SNE to learned node embeddings $\{\mathbf{z}_i\}$ to visualize cluste
 \end{itemize}
 
 This indicates the model learns strong-weak complementarity for NOMA pairing.
-
-\subsection{Feature Importance}
-
-Ablation by removing features:
-\begin{itemize}
-    \item Removing angular features: AUC drops 4.2\% (88.3\% vs 92.5\%)
-    \item Removing distance: AUC drops 1.8\% (90.7\%)
-    \item Removing path loss: AUC drops 0.6\% (91.9\%)
-\end{itemize}
-
-Conclusion: Angular separation is critical for effective pairing.
 
 \subsection{Attention Mechanisms (Future Work)}
 

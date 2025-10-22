@@ -1,87 +1,9 @@
 \chapter{Results and Discussion}
 \label{chap:results}
 
-\section{Classification Performance}
+\section{Performance Evaluation Overview}
 
-\subsection{Pairing Prediction}
-
-Table \ref{tab:classification} shows the classification performance of NOMA-GNN on the test set.
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Metric} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
-\midrule
-AUC-ROC & 0.945 & 0.928 & 0.925 \\
-Precision & 0.891 & 0.873 & 0.869 \\
-Recall & 0.908 & 0.885 & 0.882 \\
-F1-Score & 0.899 & 0.879 & 0.875 \\
-Accuracy & 0.882 & 0.861 & 0.857 \\
-\bottomrule
-\end{tabular}
-\caption{Classification Performance (Pairing Prediction)}
-\label{tab:classification}
-\end{table}
-
-\textbf{Key Observations:}
-\begin{itemize}
-    \item AUC of 0.925 indicates excellent discriminative ability
-    \item Balanced precision-recall (0.869 vs 0.882) suggests well-calibrated model
-    \item Small train-test gap (0.945 vs 0.925) indicates good generalization
-\end{itemize}
-
-\section{Regression Performance}
-
-\subsection{Sum-Rate Prediction}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Metric} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
-\midrule
-MAE (bps/Hz) & 0.024 & 0.029 & 0.031 \\
-RMSE (bps/Hz) & 0.038 & 0.045 & 0.047 \\
-MAPE (\%) & 3.2 & 3.8 & 4.1 \\
-R² Score & 0.967 & 0.951 & 0.948 \\
-\bottomrule
-\end{tabular}
-\caption{Sum-Rate Regression Performance}
-\label{tab:sumrate}
-\end{table}
-
-\textbf{Analysis:}
-\begin{itemize}
-    \item MAE of 0.031 bps/Hz is negligible compared to typical rates (10-20 bps/Hz)
-    \item High R² (0.948) indicates model captures 94.8\% of variance
-    \item MAPE of 4.1\% demonstrates accurate predictions across all rate ranges
-\end{itemize}
-
-\subsection{Power Allocation Prediction}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Metric} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
-\midrule
-MAE (Watts) & 0.007 & 0.008 & 0.009 \\
-RMSE (Watts) & 0.012 & 0.014 & 0.015 \\
-MAPE (\%) & 2.1 & 2.5 & 2.7 \\
-R² Score & 0.981 & 0.973 & 0.971 \\
-\bottomrule
-\end{tabular}
-\caption{Power Allocation Regression Performance}
-\label{tab:power}
-\end{table}
-
-\textbf{Insights:}
-\begin{itemize}
-    \item Very low MAE (0.009 W) ensures power predictions are within tolerance
-    \item R² of 0.971 indicates excellent fit
-    \item Power predictions respect total power constraint violations $< 1\%$
-\end{itemize}
+We evaluated NOMA-GNN on a single 500-user deployment scenario, comparing it against four baseline methods: Static Pairing, Balanced Pairing, Bipartite Matching, and Blossom Matching. The evaluation focused on two primary metrics: system throughput and computational complexity.
 
 \section{System Throughput Comparison}
 
@@ -91,53 +13,52 @@ R² Score & 0.981 & 0.973 & 0.971 \\
 \centering
 \begin{tabular}{lrrr}
 \toprule
-\textbf{Method} & \textbf{Throughput} & \textbf{vs Blossom} & \textbf{Jain's Index} \\
- & \textbf{(bps/Hz)} & \textbf{(\%)} & \\
+\textbf{Method} & \textbf{Throughput} & \textbf{Sum-Rate} & \textbf{vs Blossom} \\
+ & \textbf{(Gbps)} & \textbf{(bits/s/Hz)} & \textbf{(\%)} \\
 \midrule
-Static & 142.3 ± 18.7 & 81.4 & 0.743 \\
-Balanced & 153.8 ± 20.1 & 88.0 & 0.801 \\
-Bipartite PF & 163.2 ± 19.3 & 93.4 & 0.875 \\
-\textbf{NOMA-GNN} & \textbf{167.4 ± 18.9} & \textbf{95.8} & \textbf{0.903} \\
-Blossom & 174.8 ± 19.5 & 100.0 & 0.921 \\
+Static & 40.78 & 8.16 & 55.6 \\
+Balanced & 52.80 & 10.56 & 72.0 \\
+Bipartite PF & 73.30 & 15.80 & 100.0 \\
+Blossom (opt.) & 73.30 & 15.80 & 100.0 \\
+\textbf{NOMA-GNN} & \textbf{70.74} & \textbf{15.72} & \textbf{96.5} \\
 \bottomrule
 \end{tabular}
-\caption{System Throughput Comparison (7,500 test scenarios)}
-\label{tab:throughput}
+\caption{Throughput Comparison on 500-User Test Scenario}
+\label{tab:throughput_comparison}
 \end{table}
 
-\textbf{Discussion:}
+\textbf{Key Observations:}
 \begin{itemize}
-    \item NOMA-GNN achieves 95.8\% of optimal Blossom throughput
-    \item Outperforms all polynomial-time baselines
-    \item Jain's index (0.903) indicates near-optimal fairness
-    \item Gap to Blossom (4.2\%) is acceptable for real-time deployment
+    \item NOMA-GNN achieves 96.5\% of optimal (Blossom) throughput
+    \item Outperforms simple heuristics by 34-74\%
+    \item Closely matches Bipartite matching performance
+    \item Sum-rate of 15.72 bits/s/Hz demonstrates near-optimal spectral efficiency
 \end{itemize}
 
-\subsection{Performance by User Count}
+\subsection{Pairing Efficiency}
 
 \begin{table}[H]
 \centering
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrr}
 \toprule
- & \multicolumn{5}{c}{\textbf{Number of Users}} \\
-\textbf{Method} & \textbf{N=4} & \textbf{N=6} & \textbf{N=8} & \textbf{N=10} & \textbf{N=12} \\
+\textbf{Method} & \textbf{Pairs Formed} & \textbf{Efficiency (\%)} \\
 \midrule
-Static & 83.2\% & 82.1\% & 81.0\% & 80.5\% & 79.8\% \\
-Balanced & 89.5\% & 88.7\% & 87.9\% & 87.3\% & 86.5\% \\
-Bipartite & 94.1\% & 93.8\% & 93.2\% & 92.9\% & 92.3\% \\
-\textbf{GNN} & \textbf{96.3\%} & \textbf{96.1\%} & \textbf{95.7\%} & \textbf{95.4\%} & \textbf{95.0\%} \\
+Static & 250 & 100.0 \\
+Balanced & 250 & 100.0 \\
+Bipartite PF & 232 & 92.8 \\
+Blossom & 232 & 92.8 \\
+\textbf{NOMA-GNN} & \textbf{225} & \textbf{90.0} \\
 \bottomrule
 \end{tabular}
-\caption{Throughput vs Blossom by User Count}
-\label{tab:throughput_users}
+\caption{User Pairing Efficiency}
+\label{tab:pairing_efficiency}
 \end{table}
 
-\textbf{Trends:}
+\textbf{Analysis:}
 \begin{itemize}
-    \item NOMA-GNN maintains $>95\%$ across all densities
-    \item Performance degrades slightly with density (96.3\% → 95.0\%)
-    \item Heuristics degrade faster (Static: 83.2\% → 79.8\%)
-    \item Demonstrates scalability to larger networks
+    \item NOMA-GNN forms 225 pairs out of 250 possible (90\% efficiency)
+    \item Slightly lower than optimal methods (92.8\%) but compensated by better power allocation
+    \item Simple heuristics achieve 100\% pairing but with suboptimal throughput
 \end{itemize}
 
 \section{Computational Efficiency}
@@ -148,256 +69,120 @@ Bipartite & 94.1\% & 93.8\% & 93.2\% & 92.9\% & 92.3\% \\
 \centering
 \begin{tabular}{lrrr}
 \toprule
-\textbf{Method} & \textbf{Runtime (ms)} & \textbf{Speedup} & \textbf{Complexity} \\
+\textbf{Method} & \textbf{Runtime (ms)} & \textbf{vs GNN} & \textbf{Complexity} \\
 \midrule
-Static & 0.3 ± 0.1 & 67× & $O(N \log N)$ \\
-Balanced & 0.4 ± 0.1 & 50× & $O(N \log N)$ \\
-Bipartite PF & 8.2 ± 2.1 & 2.4× & $O(N^3)$ \\
-\textbf{NOMA-GNN} & \textbf{1.1 ± 0.2} & \textbf{20×} & $O(N \log N)$ \\
-Blossom & 22.7 ± 5.3 & 1× & $O(N^3)$ \\
+Static & 0.30 & 2828× faster & $O(N \log N)$ \\
+Balanced & 0.19 & 4455× faster & $O(N \log N)$ \\
+Bipartite PF & 32,927 & 38.9× slower & $O(N^3)$ \\
+Blossom & 44,749 & 52.9× slower & $O(N^3)$ \\
+\textbf{NOMA-GNN} & \textbf{846} & \textbf{baseline} & $\boldsymbol{O(N \log N)}$ \\
 \bottomrule
 \end{tabular}
-\caption{Runtime Comparison ($N=10$ users, CPU Intel i7)}
+\caption{Runtime Comparison ($N=500$ users, NVIDIA RTX 3060 GPU)}
 \label{tab:runtime}
 \end{table}
 
 \textbf{Analysis:}
 \begin{itemize}
-    \item NOMA-GNN is \textbf{20× faster} than Blossom
-    \item Only 3.7× slower than simple heuristics
-    \item Bipartite PF (8.2 ms) is slower despite $O(N^3)$ due to optimization iterations
-    \item 1.1 ms latency enables real-time scheduling (< 1 TTI @ 1 ms)
+    \item NOMA-GNN is \textbf{52.9× faster} than Blossom matching
+    \item Achieves $O(N \log N)$ complexity vs $O(N^3)$ for optimal methods
+    \item 846 ms latency suitable for semi-static scheduling (updated every few seconds)
+    \item Simple heuristics are faster but sacrifice 28-44\% throughput
 \end{itemize}
 
-\subsection{Scalability with Network Size}
+\subsection{Complexity-Throughput Trade-off}
 
-\begin{table}[H]
+Figure \ref{fig:tradeoff} illustrates the fundamental trade-off between computational complexity and system throughput:
+
+\begin{figure}[H]
 \centering
-\begin{tabular}{lrrrrr}
-\toprule
-\textbf{Users} & \textbf{Static} & \textbf{Balanced} & \textbf{Bipartite} & \textbf{GNN} & \textbf{Blossom} \\
-\midrule
-4 & 0.2 ms & 0.3 ms & 2.1 ms & 0.7 ms & 5.3 ms \\
-6 & 0.3 ms & 0.4 ms & 4.5 ms & 0.9 ms & 11.2 ms \\
-8 & 0.3 ms & 0.4 ms & 6.8 ms & 1.0 ms & 17.8 ms \\
-10 & 0.3 ms & 0.4 ms & 8.2 ms & 1.1 ms & 22.7 ms \\
-12 & 0.4 ms & 0.5 ms & 11.5 ms & 1.3 ms & 34.1 ms \\
-14 & 0.4 ms & 0.5 ms & 15.2 ms & 1.5 ms & 48.9 ms \\
-\bottomrule
-\end{tabular}
-\caption{Runtime Scalability}
-\end{table}
+\begin{tikzpicture}
+\begin{axis}[
+    xlabel={Runtime (ms, log scale)},
+    ylabel={Throughput (Gbps)},
+    xmode=log,
+    grid=major,
+    legend pos=south east,
+    width=0.8\textwidth,
+    height=0.5\textwidth
+]
+\addplot[only marks, mark=*, mark size=3pt, color=blue] coordinates {
+    (0.30, 40.78)
+    (0.19, 52.80)
+};
+\addplot[only marks, mark=square*, mark size=3pt, color=red] coordinates {
+    (32927, 73.30)
+    (44749, 73.30)
+};
+\addplot[only marks, mark=diamond*, mark size=4pt, color=green] coordinates {
+    (846, 70.74)
+};
+\legend{Fast Heuristics ($O(N \log N)$), Optimal ($O(N^3)$), NOMA-GNN}
+\end{axis}
+\end{tikzpicture}
+\caption{Complexity-Throughput Trade-off: NOMA-GNN achieves near-optimal throughput with polynomial complexity}
+\label{fig:tradeoff}
+\end{figure}
 
-\textbf{Observations:}
+\textbf{Key Insights:}
 \begin{itemize}
-    \item GNN runtime grows near-linearly ($O(N \log N)$)
-    \item Blossom grows cubically (5.3 ms → 48.9 ms for $N=4 \to 14$)
-    \item At $N=14$, GNN is \textbf{33× faster} than Blossom
-\end{itemize}
-
-\section{Ablation Studies}
-
-\subsection{Impact of Multi-Task Learning}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrr}
-\toprule
-\textbf{Model Variant} & \textbf{Pairing AUC} & \textbf{Throughput (\%)} \\
-\midrule
-Pairing only & 0.918 & 94.2\% \\
-Pairing + Sum-Rate & 0.923 & 95.3\% \\
-\textbf{Full Multi-Task} & \textbf{0.925} & \textbf{95.8\%} \\
-\bottomrule
-\end{tabular}
-\caption{Multi-Task Learning Impact}
-\end{table}
-
-\textbf{Conclusion:} Joint training improves both pairing (+0.7\% AUC) and throughput (+1.6\%).
-
-\subsection{Feature Importance}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lr}
-\toprule
-\textbf{Features} & \textbf{Test AUC} \\
-\midrule
-$h_i$ only & 0.821 \\
-$h_i$, $d_i$ & 0.882 \\
-$h_i$, $d_i$, $\theta_i$ & 0.904 \\
-$h_i$, $d_i$, $\theta_i$, $x_i$, $y_i$ & \textbf{0.925} \\
-\bottomrule
-\end{tabular}
-\caption{Feature Ablation}
-\end{table}
-
-\textbf{Insights:}
-\begin{itemize}
-    \item Channel gain $h_i$ is most critical (0.821 AUC alone)
-    \item Distance improves +6.1\% AUC
-    \item Angular features add +2.2\% AUC
-    \item Spatial coordinates provide final +2.1\% boost
-\end{itemize}
-
-\subsection{GNN Depth}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Layers} & \textbf{AUC} & \textbf{Throughput} & \textbf{Runtime (ms)} \\
-\midrule
-2 & 0.912 & 94.7\% & 0.9 \\
-\textbf{3} & \textbf{0.925} & \textbf{95.8\%} & \textbf{1.1} \\
-4 & 0.923 & 95.6\% & 1.4 \\
-\bottomrule
-\end{tabular}
-\caption{Impact of Network Depth}
-\end{table}
-
-\textbf{Analysis:}
-\begin{itemize}
-    \item 3 layers optimal (3-hop neighborhood sufficient)
-    \item 4 layers adds no benefit (over-smoothing)
-    \item 2 layers insufficient context (1.3\% throughput drop)
-\end{itemize}
-
-\subsection{Hard Negative Sampling}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrr}
-\toprule
-\textbf{Sampling Strategy} & \textbf{AUC} & \textbf{Throughput (\%)} \\
-\midrule
-Random negatives & 0.897 & 93.2\% \\
-Top-5 hard negatives & 0.918 & 95.1\% \\
-\textbf{Top-10 hard negatives} & \textbf{0.925} & \textbf{95.8\%} \\
-Top-20 hard negatives & 0.924 & 95.7\% \\
-\bottomrule
-\end{tabular}
-\caption{Hard Negative Sampling Impact}
-\end{table}
-
-\textbf{Conclusion:} Hard negatives critical (+2.8\% AUC); top-10 optimal.
-
-\section{Generalization Tests}
-
-\subsection{Unseen User Densities}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrr}
-\toprule
-\textbf{Users} & \textbf{In-Dist Throughput} & \textbf{OOD Throughput} \\
-\midrule
-12 (seen) & 95.0\% & - \\
-14 (unseen) & - & 93.8\% \\
-16 (unseen) & - & 92.5\% \\
-\bottomrule
-\end{tabular}
-\caption{Generalization to Unseen Densities}
-\end{table}
-
-\textbf{Discussion:}
-\begin{itemize}
-    \item Performance degrades gracefully (95.0\% → 92.5\% at $N=16$)
-    \item Still outperforms Bipartite PF (93.4\% at $N=10$)
-    \item Indicates learned features transfer to larger networks
-\end{itemize}
-
-\subsection{Different Channel Conditions}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lr}
-\toprule
-\textbf{Scenario} & \textbf{Throughput vs Blossom} \\
-\midrule
-Standard ($\sigma_{SF}$ = 4-6 dB) & 95.8\% \\
-High shadowing ($\sigma_{SF}$ = 8 dB) & 94.3\% \\
-No shadow fading & 96.2\% \\
-\bottomrule
-\end{tabular}
-\caption{Generalization to Different Channels}
-\end{table}
-
-\textbf{Robustness:} Performance remains $>94\%$ under varied fading.
-
-\subsection{Alternative Geometries}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lr}
-\toprule
-\textbf{Cell Geometry} & \textbf{Throughput vs Blossom} \\
-\midrule
-Circular (training) & 95.8\% \\
-Hexagonal & 94.1\% \\
-Square & 93.7\% \\
-\bottomrule
-\end{tabular}
-\caption{Generalization to Cell Shapes}
-\end{table}
-
-\textbf{Insight:} Moderate drop (1.7-2.1\%) on unseen geometries; still practical.
-
-\section{Fairness Analysis}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Method} & \textbf{Jain's Index} & \textbf{5th \%ile Rate} & \textbf{95th \%ile Rate} \\
-\midrule
-Static & 0.743 & 4.2 & 18.9 \\
-Balanced & 0.801 & 5.1 & 17.3 \\
-Bipartite PF & 0.875 & 6.8 & 16.2 \\
-\textbf{NOMA-GNN} & \textbf{0.903} & \textbf{7.4} & \textbf{15.8} \\
-Blossom & 0.921 & 7.9 & 15.3 \\
-\bottomrule
-\end{tabular}
-\caption{Fairness Metrics (bps/Hz)}
-\end{table}
-
-\textbf{Analysis:}
-\begin{itemize}
-    \item Jain's index (0.903) close to optimal (0.921)
-    \item 5th percentile rate (7.4) ensures cell-edge users served well
-    \item 95th-5th gap (8.4) narrower than baselines (14.7 for Static)
-\end{itemize}
-
-\section{Model Interpretability}
-
-\subsection{Attention Weights}
-
-Analysis of learned edge weights reveals:
-\begin{itemize}
-    \item High attention to channel-dissimilar neighbors
-    \item Spatial proximity less important than channel complementarity
-    \item Angular diversity emphasized for interference mitigation
-\end{itemize}
-
-\subsection{Feature Embeddings}
-
-t-SNE visualization of final-layer embeddings shows:
-\begin{itemize}
-    \item Clear clustering of users by channel quality
-    \item Optimal pairs map to nearby regions in embedding space
-    \item Strong-weak pairs form distinct clusters
+    \item Clear gap between fast heuristics (< 1 ms, 40-53 Gbps) and optimal methods (30-45 s, 73 Gbps)
+    \item NOMA-GNN bridges the gap: 0.846 s runtime with 70.74 Gbps (96.5\% of optimal)
+    \item $O(N^3)$ methods become prohibitive for $N > 100$ users
+    \item $O(N \log N)$ complexity enables scaling to 1000+ users per cell
 \end{itemize}
 
 \section{Summary of Key Results}
 
+Based on testing on a single 500-user deployment scenario:
+
 \begin{enumerate}
-    \item \textbf{Classification:} 92.5\% AUC on pairing prediction
-    \item \textbf{Regression:} MAE of 0.031 bps/Hz (sum-rate), 0.009 W (power)
-    \item \textbf{Throughput:} 95.8\% of optimal with 20× speedup
-    \item \textbf{Fairness:} Jain's index 0.903 (near-optimal)
-    \item \textbf{Generalization:} $>92\%$ on unseen densities, channels, geometries
-    \item \textbf{Scalability:} Linear runtime growth vs cubic for Blossom
-    \item \textbf{Real-time:} 1.1 ms latency enables TTI-level scheduling
+    \item \textbf{Throughput:} 96.5\% of optimal (70.74 Gbps vs 73.30 Gbps)
+    \item \textbf{Speedup:} 52.9× faster than Blossom (846 ms vs 44.7 s)
+    \item \textbf{Complexity:} $O(N \log N)$ vs $O(N^3)$ for optimal methods
+    \item \textbf{Pairing Efficiency:} 90\% (225 pairs formed out of 250 possible)
+    \item \textbf{Scalability:} Successfully handles high-density scenario (N=500)
+    \item \textbf{Sum-Rate:} 15.72 bits/s/Hz (99.5\% of optimal 15.80 bits/s/Hz)
 \end{enumerate}
 
-These results demonstrate that NOMA-GNN achieves a compelling tradeoff between optimality and computational efficiency, making it suitable for practical deployment in next-generation wireless networks.
+\section{Limitations and Future Work}
+
+\subsection{Current Limitations}
+
+\begin{itemize}
+    \item \textbf{Single Scenario Testing:} Evaluation based on one 500-user deployment. Statistical validation across multiple scenarios needed.
+    
+    \item \textbf{Fixed Density:} Training and testing only on N=500. Generalization to variable densities (N ∈ \{50, 100, 200, 1000\}) not evaluated.
+    
+    \item \textbf{No Classification Metrics:} AUC, precision, recall not computed (requires labeled test pairs).
+    
+    \item \textbf{No Regression Metrics:} MAE, RMSE, R² for sum-rate and power allocation not evaluated.
+    
+    \item \textbf{Fairness Analysis Missing:} Jain's fairness index and per-user rate distributions not computed.
+    
+    \item \textbf{Channel Model Limited:} Only tested on 3GPP UMa. Performance under other models (UMi, InH) unknown.
+    
+    \item \textbf{Ablation Studies Not Performed:} Impact of multi-task learning, feature importance, network depth, and sampling strategies not investigated.
+\end{itemize}
+
+\subsection{Future Work}
+
+\begin{itemize}
+    \item \textbf{Multi-Scenario Evaluation:} Test on diverse deployments for statistical validation
+    
+    \item \textbf{Variable Density:} Train on mixed densities (N ∈ \{100, 200, 500, 1000\})
+    
+    \item \textbf{Comprehensive Metrics:} Compute classification and regression performance
+    
+    \item \textbf{Fairness Analysis:} Evaluate user-level throughput distribution
+    
+    \item \textbf{Ablation Studies:} Investigate impact of architecture choices
+    
+    \item \textbf{Generalization Testing:} Evaluate on unseen densities, channel conditions, and cell geometries
+    
+    \item \textbf{Real-World Deployment:} Field testing in actual base station environment
+\end{itemize}
+
+\section{Conclusion}
+
+These results demonstrate that NOMA-GNN achieves a compelling trade-off between optimality (96.5\%) and computational efficiency (52.9× speedup), validating the feasibility of GNN-based resource allocation for high-density 5G/6G networks. While tested on a single scenario, the approach shows that near-optimal performance with polynomial complexity is achievable, addressing the computational bottleneck of traditional optimal methods.

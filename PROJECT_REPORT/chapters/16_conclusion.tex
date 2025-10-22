@@ -31,10 +31,10 @@ This project presented a comprehensive study on Graph Neural Network-based user 
 
 \subsection{Comprehensive Benchmarking}
 \begin{itemize}
-    \item Compared against Static, Balanced, Blossom, Bipartite PF methods
-    \item Evaluated on throughput, fairness, runtime, generalization
-    \item Demonstrated 95.8\% optimal throughput with 20× speedup
-    \item Achieved near-optimal fairness (Jain's index 0.903)
+    \item Compared against Static, Balanced, Blossom, Bipartite PF methods on 500-user scenario
+    \item Evaluated on throughput, runtime, pairing efficiency, and complexity
+    \item Demonstrated 96.5\% optimal throughput (70.74 Gbps vs 73.30 Gbps) with 52.9× speedup (846ms vs 44.7s)
+    \item Achieved O(N log N) complexity vs O(N³) for optimal methods
 \end{itemize}
 
 \subsection{Practical Implementation}
@@ -49,25 +49,27 @@ This project presented a comprehensive study on Graph Neural Network-based user 
 
 \subsection{Performance}
 \begin{enumerate}
-    \item NOMA-GNN achieves \textbf{95.8\% of optimal throughput}, outperforming all polynomial-time baselines
-    \item Classification AUC of \textbf{92.5\%} indicates excellent pairing discrimination
-    \item Regression MAE of \textbf{0.031 bps/Hz} for sum-rate prediction demonstrates accurate rate estimation
-    \item Jain's fairness index of \textbf{0.903} ensures equitable user service
+    \item NOMA-GNN achieves \textbf{96.5\% of optimal throughput} (70.74 Gbps vs 73.30 Gbps), outperforming simple heuristics by 34-74\%
+    \item Sum-rate of \textbf{15.72 bits/s/Hz} demonstrates near-optimal spectral efficiency (99.5\% of Blossom's 15.80)
+    \item Pairs 225 users (90\% efficiency) compared to Blossom's 232 pairs (92.8\%)
+    \item Successfully scales to high-density deployments (N=500 users per cell)
 \end{enumerate}
 
 \subsection{Efficiency}
 \begin{enumerate}
-    \item Runtime of \textbf{1.1 ms} for 10 users enables real-time scheduling
-    \item \textbf{20× speedup} over Blossom matching ($O(N^3)$)
-    \item Near-linear scalability ($O(N \log N)$) up to 16 users
-    \item Inference latency $< 1$ TTI (1 ms) for practical deployment
+    \item Runtime of \textbf{846 ms} for 500 users enables semi-static scheduling (updated every few seconds)
+    \item \textbf{52.9× speedup} over Blossom matching (846ms vs 44,749ms)
+    \item O(N log N) complexity allows scaling to 1000+ users
+    \item Lightweight model (128K parameters) suitable for edge base station deployment
 \end{enumerate}
 
-\subsection{Generalization}
+\subsection{Limitations}
 \begin{enumerate}
-    \item Maintains \textbf{$>92\%$ throughput} on unseen user densities ($N=14, 16$)
-    \item Robust to channel variations (94.3\% under high shadowing)
-    \item Transfers to alternative cell geometries (93.7-94.1\%)
+    \item Tested on single 500-user scenario; statistical validation across multiple scenarios needed
+    \item Training limited to N=500; generalization to other densities not evaluated
+    \item Classification metrics (AUC, precision, recall) not computed
+    \item Fairness analysis (Jain's index, per-user rates) not performed
+\end{enumerate}
     \item Learns generalizable pairing patterns beyond training distribution
 \end{enumerate}
 

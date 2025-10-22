@@ -15,7 +15,7 @@ Python with NumPy/Matplotlib/Pandas/NetworkX. Each run creates a timestamped res
 \multicolumn{2}{l}{\textit{Network Configuration}} \\
 Cell type & 3GPP TR 38.901 Urban Macro (UMa) \\
 Cell radius $R$ & 5000 m \\
-User count $N$ & \{4, 6, 8, 10, 12\} (variable density) \\
+User count $N$ & 500 (high-density scenario) \\
 Carrier frequency $f_c$ & 3.5 GHz \\
 Bandwidth $B$ & 20 MHz \\
 BS height $h_{\mathrm{BS}}$ & 25 m \\
@@ -35,8 +35,8 @@ Angular constraint & $25^\circ$ separation (Bipartite only) \\
 Power allocation & Golden-section search (sum-rate max.) \\
 \midrule
 \multicolumn{2}{l}{\textit{GNN Training}} \\
-Dataset size & 50,000 scenarios \\
-Train/Val/Test split & 70\% / 15\% / 15\% \\
+Training scenarios & 200 (500 users each) \\
+Total training samples & 100,000 user instances \\
 Batch size & 32 graphs \\
 Optimizer & Adam ($lr=10^{-3}$, $\beta_1=0.9$, $\beta_2=0.999$) \\
 Hidden dimension & 128 \\

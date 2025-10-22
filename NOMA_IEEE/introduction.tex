@@ -36,32 +36,27 @@ This work presents a comprehensive framework combining traditional optimization-
     
     \item \textbf{Graph Neural Network Framework:} We propose NOMA-GNN, a novel GraphSAGE-based deep learning architecture that:
     \begin{itemize}
-        \item Treats users as graph nodes with CSI-derived features
+        \item Treats users as graph nodes with CSI-derived features (channel gain, distance, angle)
         \item Learns message-passing representations capturing user relationships
-        \item Employs multi-task learning to jointly predict:
-        \begin{enumerate}
-            \item Pairing feasibility (binary classification with 92.5\% AUC)
-            \item Sum-rate prediction (MAE = 0.031 bits/Hz)
-            \item Optimal power split coefficient $\alpha$ (MAE = 0.009)
-        \end{enumerate}
+        \item Predicts pairwise compatibility scores for user pairing decisions
         \item Enforces physical constraints (SIC feasibility, angular separation) during candidate generation
-        \item Achieves $O(N \log N)$ inference complexity via greedy matching
+        \item Achieves $O(N \log N)$ inference complexity via greedy matching on predicted scores
     \end{itemize}
     
     \item \textbf{End-to-End Learning Pipeline:} We develop a complete data processing, training, and deployment workflow:
     \begin{itemize}
         \item Automated graph construction from raw CSV channel measurements
-        \item Hard negative sampling strategy for discriminative learning
-        \item Multi-task loss weighting for balanced optimization
+        \item Training on optimal pairing labels from Blossom algorithm
         \item Real-time inference with SIC verification
+        \item Lightweight model (128K parameters) suitable for edge deployment
     \end{itemize}
     
     \item \textbf{Comprehensive Performance Evaluation:} We provide extensive experimental analysis demonstrating:
     \begin{itemize}
-        \item GNN achieves 95.8\% of optimal Blossom throughput
-        \item 10-20× speedup compared to optimization-based methods
-        \item Robust generalization to unseen scenarios and user densities
-        \item Interpretable power allocation decisions aligned with NOMA principles
+        \item GNN achieves 96.5\% of optimal Blossom throughput (70.74 Gbps vs 73.30 Gbps)
+        \item 52.9× speedup compared to Blossom matching (846ms vs 44,749ms)
+        \item $O(N \log N)$ complexity enabling practical deployment for N=500 users
+        \item Near-optimal sum-rate (15.72 bits/s/Hz) with efficient pairing strategy
     \end{itemize}
 \end{enumerate}
 

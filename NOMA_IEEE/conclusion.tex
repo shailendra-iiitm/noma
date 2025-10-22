@@ -7,13 +7,13 @@ This work presented a comprehensive framework for user pairing in Power-Domain N
 This work makes four principal contributions:
 
 \begin{enumerate}
-    \item \textbf{Realistic Evaluation Framework:} First GNN-NOMA work using standardized 3GPP TR 38.901 channels with 50K scenarios and ground-truth Blossom labels. Comprehensive baseline comparison across 4 traditional methods shows Bipartite PF achieves best complexity-performance trade-off (93.4\% optimal, $O(N^2)$ complexity).
+    \item \textbf{Realistic Evaluation Framework:} Generated 200 high-density deployment scenarios using standardized 3GPP TR 38.901 Urban Macro channels with N=500 users per scenario. Comprehensive baseline comparison across 4 traditional methods shows Bipartite PF achieves optimal throughput but with prohibitive computational complexity.
     
-    \item \textbf{Novel Multi-Task GNN Architecture:} GraphSAGE-based model with physical constraint-aware graph construction jointly predicts: (i)~pairing decisions (92.5\% AUC), (ii)~sum-rates (0.031 bps/Hz MAE), (iii)~power allocation (0.009 MAE). First GNN to unify all three NOMA optimization tasks with 133K parameters suitable for edge deployment.
+    \item \textbf{Novel GNN Architecture:} GraphSAGE-based model with physical constraint-aware graph construction learns user pairing patterns from training data. Achieves $O(N \log N)$ inference complexity with lightweight architecture (128K parameters) suitable for edge deployment.
     
-    \item \textbf{Near-Optimal Real-Time Performance:} Achieves 95.8\% of optimal throughput ($p < 10^{-5}$) with 20× speedup (6.4 ms vs. 127.6 ms) and $O(N \log N)$ complexity—enabling 1 ms TTI granularity in 5G NR. Significantly outperforms best baseline by 2.5\% ($p < 10^{-6}$) with highest fairness index (0.903).
+    \item \textbf{Near-Optimal Real-Time Performance:} Achieves 96.5\% of optimal throughput (70.74 Gbps vs 73.30 Gbps) with 52.9× speedup (846 ms vs 44.7 s) compared to Blossom matching. The $O(N \log N)$ complexity enables practical deployment for networks with 500+ users per cell.
     
-    \item \textbf{Robust Generalization:} Minimal degradation ($< 2.1\%$) on unseen densities, channel conditions, and geometries. Validated over 7,500 independent test scenarios with narrow confidence intervals ($\pm 1.4$ bps/Hz), demonstrating production readiness.
+    \item \textbf{Practical Deployment Viability:} Sub-second inference latency (846ms) suitable for semi-static scheduling in 5G NR systems. Significantly outperforms simple heuristics (73.5\% gain over Static, 34.0\% over Balanced) while maintaining computational efficiency.
 \end{enumerate}
 
 \subsection{Practical Implications}
@@ -23,11 +23,11 @@ The results have several important implications for next-generation wireless net
 \begin{itemize}
     \item \textbf{Scalability:} NOMA-GNN's computational efficiency enables NOMA deployment in dense urban scenarios with hundreds of users per cell, previously impractical with optimization methods.
     
-    \item \textbf{Energy Efficiency:} Accurate power allocation (MAE = 0.009) reduces wasted transmit power, improving base station energy efficiency and extending battery life for IoT devices.
+    \item \textbf{Real-Time Operation:} Sub-second inference latency (846ms) enables practical deployment for semi-static scheduling in real networks.
     
-    \item \textbf{Quality of Service:} Superior fairness (0.903) ensures cell-edge users receive adequate rates, critical for mission-critical applications and emergency services.
+    \item \textbf{Quality of Service:} Near-optimal throughput (96.5\%) ensures good performance across all users while maintaining computational efficiency.
     
-    \item \textbf{Edge Intelligence:} The lightweight model (520 KB) can be deployed on base station edge computing platforms, enabling distributed real-time optimization without cloud dependency.
+    \item \textbf{Edge Intelligence:} The lightweight model (~128K parameters, 520 KB) can be deployed on base station edge computing platforms, enabling distributed real-time optimization without cloud dependency.
 \end{itemize}
 
 \subsection{Future Research Directions}

@@ -151,17 +151,15 @@ The main contributions of this project are:
     
     \item \textbf{Novel GNN Architecture:} NOMA-GNN framework featuring:
     \begin{itemize}
-        \item Multi-task learning with three jointly optimized objectives
+        \item Graph-based user pairing learned from optimal Blossom solutions
         \item Physical constraint enforcement at graph construction stage
-        \item Hard negative sampling for discriminative training
-        \item Interpretable embeddings revealing pairing strategies
+        \item Lightweight architecture (128K parameters) suitable for edge deployment
+        \item O(N log N) complexity for scalable real-time operation
     \end{itemize}
     
-    \item \textbf{Superior Performance:} Demonstrated 95.8\% of optimal throughput with 20× speedup, establishing practical viability for real-time deployment in dense networks.
+    \item \textbf{Superior Performance:} Demonstrated 96.5\% of optimal throughput with 52.9× speedup, establishing practical viability for deployment in dense networks with 500+ users per cell.
     
-    \item \textbf{Robust Generalization:} Empirical evidence of <4\% performance degradation on unseen user densities, channel conditions, and cell geometries.
-    
-    \item \textbf{Open Implementation:} Complete codebase with data preprocessing, model training, inference pipeline, and visualization tools for reproducibility and future research.
+    \item \textbf{Open Implementation:} Complete codebase with data preprocessing, model training, inference pipeline, and evaluation tools for reproducibility and future research.
 \end{enumerate}
 
 \section{Report Organization}

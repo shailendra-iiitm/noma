@@ -279,15 +279,15 @@ In dB:
 
 \section{Dataset Generation}
 
-For training the GNN, we generate 50,000 scenarios:
+For training the GNN, we generate 200 high-density scenarios:
 
 \begin{enumerate}
-    \item \textbf{Vary User Count:} $N \in \{4, 6, 8, 10, 12\}$ to capture different densities
+    \item \textbf{Fixed Density:} $N = 500$ users per scenario to study dense deployments
     \item \textbf{Independent Realizations:} Each scenario has fresh user positions, channel realizations
     \item \textbf{CSV Storage:} Save $(r_i, \theta_i, d_i, PL_i, SF_i, |g_i|^2, |h_i|^2)$ for each user
 \end{enumerate}
 
-Total dataset size: ~2.5 GB for 50k scenarios.
+Total dataset size: 100,000 user samples (200 scenarios × 500 users).
 
 \section{Validation}
 

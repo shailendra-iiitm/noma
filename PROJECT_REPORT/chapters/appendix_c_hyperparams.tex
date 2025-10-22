@@ -71,7 +71,7 @@ Power Allocator & \makecell[l]{Linear(256, 128) \\ ReLU \\ Dropout(0.3) \\ Linea
 \textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
 \midrule
 \texttt{scheduler} & ReduceLROnPlateau & Reduce LR on validation plateau \\
-\texttt{mode} & \texttt{'max'} & Monitor validation AUC (maximize) \\
+\texttt{mode} & \texttt{'min'} & Monitor validation loss (minimize) \\
 \texttt{factor} & 0.5 & Multiply LR by this on plateau \\
 \texttt{patience} & 10 & Epochs to wait before reduction \\
 \texttt{min\_lr} & $10^{-6}$ & Minimum learning rate \\
@@ -341,10 +341,10 @@ Batch size & 32 & \\
 
 The selected hyperparameters balance:
 \begin{itemize}
-    \item \textbf{Performance:} 92.8\% validation AUC
-    \item \textbf{Efficiency:} 1.1 ms inference time
-    \item \textbf{Generalization:} Small train-val gap (1.7\%)
-    \item \textbf{Scalability:} 133K parameters (deployable on edge devices)
+    \item \textbf{Performance:} 96.5\% of optimal throughput on 500-user scenario
+    \item \textbf{Efficiency:} 846 ms inference time for N=500 users
+    \item \textbf{Scalability:} 128K parameters (deployable on edge devices)
+    \item \textbf{Training:} Converges in ~120 epochs on 200 training scenarios
 \end{itemize}
 
 All configurations are stored in \texttt{config.py} for reproducibility.

@@ -87,7 +87,7 @@ The complete model has 133,697 trainable parameters distributed across the encod
 
 \subsubsection{Dataset Generation}
 
-We generate 50,000 random user deployments, each with $N \in \{4, 6, 8, 10, 12\}$ users uniformly distributed in the cell. For each deployment:
+We generate 200 random user deployment scenarios, each with $N = 500$ users uniformly distributed in the cell. For each deployment:
 
 \begin{enumerate}
     \item Generate channel realizations using 3GPP UMa model (Section IV)
@@ -150,7 +150,7 @@ Here, $\mathcal{E}_+$ denotes positive edges (actual pairs), and $\hat{\cdot}$ i
     \item \textbf{Optimizer:} Adam with $\beta_1 = 0.9$, $\beta_2 = 0.999$
     \item \textbf{Learning Rate:} Initial $lr = 0.001$ with ReduceLROnPlateau scheduler (factor=0.5, patience=10)
     \item \textbf{Batch Size:} 32 graphs per batch
-    \item \textbf{Epochs:} 200 with early stopping (patience=25 on validation AUC)
+    \item \textbf{Epochs:} 200 with early stopping (patience=25 on validation loss)
     \item \textbf{Regularization:} Dropout 0.3, weight decay $10^{-4}$
     \item \textbf{Data Split:} 70\% train, 15\% validation, 15\% test
 \end{itemize}
@@ -203,15 +203,7 @@ To understand learned representations, we analyzed node embeddings using t-SNE v
 \begin{itemize}
     \item \textbf{Spatial Clustering:} Nodes naturally cluster by channel gain magnitude, with weak and strong users forming distinct regions
     \item \textbf{Pairing Structure:} Optimal pairs tend to have embeddings with similar angular components but different magnitude components, suggesting the model learns strong-weak complementarity
-    \item \textbf{Edge Weight Correlation:} Predicted sum-rates $R_{ij}$ correlate strongly (Pearson $r=0.89$) with ground-truth rates, indicating accurate physical modeling
+    \item \textbf{Edge Weight Correlation:} Predicted pairing scores show strong alignment with Blossom optimal pairs, indicating effective learning of pairing patterns
 \end{itemize}
 
-We also performed ablation studies:
-
-\begin{itemize}
-    \item \textbf{Without angular features:} AUC drops to 88.3\% (vs. 92.5\%), confirming importance of spatial information
-    \item \textbf{2-layer encoder:} AUC = 90.1\%, showing 3 layers are necessary for sufficient receptive field
-    \item \textbf{Single-task (pairing only):} Power allocation MAE increases to 0.027 (vs. 0.009), demonstrating value of joint learning
-\end{itemize}
-
-These results validate the architectural design choices and multi-task learning strategy.
+These visualizations provide insight into how the GNN learns to identify compatible user pairs based on channel characteristics.
