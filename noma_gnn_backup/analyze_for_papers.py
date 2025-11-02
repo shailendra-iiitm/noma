@@ -91,7 +91,7 @@ def generate_timing_stats(df):
     blossom_time = df[df['Method'] == 'Blossom']['Time_ms'].values[0]
     bipartite_time = df[df['Method'] == 'Bipartite']['Time_ms'].values[0]
     
-    print(f"\n🚀 KEY SPEEDUPS:")
+    print(f"\n KEY SPEEDUPS:")
     print(f"   GNN vs Blossom:   {blossom_time / gnn_time:.1f}× faster")
     print(f"   GNN vs Bipartite: {bipartite_time / gnn_time:.1f}× faster")
     
@@ -377,7 +377,7 @@ def main():
     generate_what_we_have_report()
     
     print("\n" + "="*80)
-    print(f"✅ ANALYSIS COMPLETE - All outputs saved to: {OUTPUT_DIR.absolute()}")
+    print(f" ANALYSIS COMPLETE - All outputs saved to: {OUTPUT_DIR.absolute()}")
     print("="*80)
     
     print("\nGENERATED FILES:")

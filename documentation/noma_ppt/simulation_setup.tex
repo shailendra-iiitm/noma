@@ -1,0 +1,58 @@
+\section{Simulation Setup and Parameters}
+\label{sec: Simulation}
+\subsection{Environment}
+Python with NumPy/Matplotlib/Pandas/NetworkX. Each run creates a timestamped results folder with CSV summaries and plots.
+
+\subsection{Baseline Parameters}
+\begin{table}[!t]
+\centering
+\caption{Complete Simulation Parameters}
+\label{tab:sim_params}
+\begin{tabular}{l l}
+\toprule
+\textbf{Parameter} & \textbf{Value/Description} \\
+\midrule
+\multicolumn{2}{l}{\textit{Network Configuration}} \\
+Cell type & 3GPP TR 38.901 Urban Macro (UMa) \\
+Cell radius $R$ & 5000 m \\
+User count $N$ & 500 (high-density scenario) \\
+Carrier frequency $f_c$ & 3.5 GHz \\
+Bandwidth $B$ & 20 MHz \\
+BS height $h_{\mathrm{BS}}$ & 25 m \\
+UE height $h_{\mathrm{UT}}$ & Uniform$[1.5, 22.5]$ m \\
+\midrule
+\multicolumn{2}{l}{\textit{Channel Model (3GPP TR 38.901)}} \\
+Path loss & UMa LOS/NLOS (Eq.~7.4.1/7.4.2) \\
+LOS probability & Height-dependent (Eq.~7.4.2) \\
+Shadowing std.\ $\sigma_{SF}$ & 4 dB (LOS), 6 dB (NLOS) \\
+Small-scale fading & Rician ($K=9$ dB, LOS) / Rayleigh (NLOS) \\
+\midrule
+\multicolumn{2}{l}{\textit{NOMA Configuration}} \\
+Total power $P_{\mathrm{total}}$ & 1 W (normalized) \\
+Noise PSD $N_0$ & $-174$ dBm/Hz \\
+SIC threshold $\Gamma_{\mathrm{SIC}}$ & 8 dB (channel gain ratio) \\
+Angular constraint & $25^\circ$ separation (Bipartite only) \\
+Power allocation & Golden-section search (sum-rate max.) \\
+\midrule
+\multicolumn{2}{l}{\textit{GNN Training}} \\
+Training scenarios & 200 (500 users each) \\
+Total training samples & 100,000 user instances \\
+Batch size & 32 graphs \\
+Optimizer & Adam ($lr=10^{-3}$, $\beta_1=0.9$, $\beta_2=0.999$) \\
+Hidden dimension & 128 \\
+Number of layers & 3 (GraphSAGE) \\
+Dropout & 0.3 \\
+Max epochs & 200 (early stop: patience=25) \\
+Hardware & NVIDIA RTX 3060 (6GB), 16GB RAM \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The 3GPP UMa model captures realistic urban environments with distance-dependent LOS probability and separate path loss formulas for LOS/NLOS conditions. Dataset generation involves uniform user deployment, 3GPP channel realization, and Blossom-based optimal pairing computation to generate ground-truth labels.
+
+\subsection{Artifacts Produced}
+\begin{itemize}
+  \item Pairing plots: \texttt{static\_pairing.png}, \texttt{balanced\_pairing.png}, \texttt{bipartite\_pf\_pairing.png}, \texttt{adaptive\_bipartite\_pf\_pairing.png}, \texttt{blossom\_pairing.png}
+  \item Channel plots: \texttt{user\_distribution.png}, \texttt{channel\_characteristics.png}, \texttt{channel\_components\_analysis.png}, \texttt{user\_positioning\_analysis.png}
+  \item Comparison: \texttt{clustering\_comparison.png}
+\end{itemize}

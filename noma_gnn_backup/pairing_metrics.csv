@@ -1,0 +1,2 @@
+GNN_Pairs,Blossom_Pairs,Pairing_Efficiency_%,Estimated_Precision_%,Estimated_Recall_%,Estimated_F1_%,Note
+225,232,96.98275862068965,100.0,96.98275862068965,98.46827133479212,Precision/Recall are conservative estimates based on pair counts

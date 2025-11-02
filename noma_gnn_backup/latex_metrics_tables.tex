@@ -1,0 +1,69 @@
+% Auto-generated LaTeX tables for NOMA-GNN paper
+% Add these to your results section
+
+
+% Pairing Efficiency Metrics
+\begin{table}[!t]
+\centering
+\caption{Pairing Efficiency Analysis}
+\label{tab:pairing_efficiency_detailed}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+GNN Pairs Formed & 225 \\
+Blossom Pairs (Optimal) & 232 \\
+Pairing Efficiency & 97.0\% \\
+\midrule
+\multicolumn{2}{l}{\textit{Estimated Classification Performance:}} \\
+Precision (est.) & 100.0\% \\
+Recall (est.) & 97.0\% \\
+F1-Score (est.) & 98.5\% \\
+\bottomrule
+\end{tabular}
+\caption*{Note: Precision/Recall estimates based on pairing counts}
+\end{table}
+
+
+
+% Throughput and Rate Comparison
+\begin{table}[!t]
+\centering
+\caption{Throughput and Spectral Efficiency Comparison}
+\label{tab:throughput_detailed}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{NOMA-GNN} & \textbf{Blossom} \\
+\midrule
+Throughput (Gbps) & 70.74 & 73.30 \\
+Sum-Rate (bits/s/Hz) & 15.72 & 15.80 \\
+\midrule
+Throughput Ratio & \multicolumn{2}{c}{96.5\%} \\
+Throughput Gap (Mbps) & \multicolumn{2}{c}{2552.0} \\
+Spectral Efficiency Ratio & \multicolumn{2}{c}{99.5\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Computational Complexity Results
+\begin{table}[!t]
+\centering
+\caption{Computational Efficiency Comparison (N=500 users)}
+\label{tab:timing_detailed}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Method} & \textbf{Runtime} & \textbf{Speedup} \\
+\midrule
+Static & 0.30 ms & 2827.6× slower \\
+Balanced & 0.19 ms & 4366.2× slower \\
+\midrule
+\textbf{NOMA-GNN} & \textbf{846 ms} & \textbf{baseline} \\
+\midrule
+Bipartite & 32927 ms & 38.9× faster \\
+Blossom & 44749 ms & 52.9× faster \\
+\bottomrule
+\end{tabular}
+\caption*{GNN achieves 52.9× speedup over optimal Blossom matching}
+\end{table}

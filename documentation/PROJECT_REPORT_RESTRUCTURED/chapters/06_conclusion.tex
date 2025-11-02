@@ -1,0 +1,64 @@
+\chapter{Conclusion and Future Directions}
+\label{chap:conclusion}
+
+This thesis addressed the computational complexity bottleneck in NOMA user pairing by developing NOMA-GNN, a Graph Neural Network framework achieving 96.5\% of optimal throughput with 52.9× faster execution than traditional optimization methods.
+
+\section{Key Contributions}
+
+\textbf{Graph-Based Problem Formulation:} We reformulated NOMA user pairing as graph representation learning where users are nodes, feasible pairings are edges, and the task predicts which edges belong in the optimal matching. Physical constraints (SIC feasibility, angular separation) are encoded through edge construction.
+
+\textbf{Multi-Task GNN Architecture:} The architecture combines a 3-layer GraphSAGE encoder (128-dimensional embeddings, 3-hop aggregation) with three parallel 2-layer MLP decoders predicting pairing decisions, sum-rates, and power allocations. The model contains 166,275 parameters (~650 KB), enabling lightweight edge deployment.
+
+\textbf{Realistic Validation:} Using 3GPP Urban Macro channel models with 500 users, we demonstrated 70.74 Gbps throughput (96.5\% optimal), 846 ms inference (52.9× faster than Blossom), 15.72 bits/s/Hz spectral efficiency (99.5\% of ceiling), and 97\% pairing efficiency (225 vs 232 pairs).
+
+\textbf{Complete Implementation:} A production-ready Python system with modular architecture, comprehensive configuration management, and documented codebase enables reproducible research and practical deployment.
+
+\section{Key Findings}
+
+NOMA-GNN achieves 96.5\% of optimal throughput while outperforming simple heuristics (55-72\% optimal) by learning complex pairing patterns from graph structure. The $O(N \log N)$ complexity enables sub-second inference for hundreds of users versus $O(N^3)$ for optimal methods. Testing on held-out scenarios demonstrates generalization to unseen network configurations, indicating learned features capture fundamental pairing principles rather than memorizing specific deployments.
+
+\section{Practical Impact}
+
+For network operators, NOMA-GNN enables real-time NOMA scheduling in dense 5G/6G deployments where traditional optimal methods fail. The 96.5\% optimal throughput maximizes spectrum utilization while the lightweight model (650 KB) supports edge deployment without cloud connectivity. For researchers, this work demonstrates GNN viability for combinatorial wireless optimization, providing a template for beam selection, spectrum allocation, and interference management problems.
+
+\section{Limitations}
+
+\textbf{Modeling Assumptions:} Perfect CSI, single-cell analysis, static channels, and perfect SIC represent idealizations. Real systems face estimation errors, inter-cell interference, channel aging, and SIC imperfections.
+
+\textbf{Scalability:} The $O(N^2)$ edge structure creates memory bottlenecks for $N > 1000$. GPU dependency limits deployment flexibility. Environment-specific retraining needed for different propagation models.
+
+\textbf{Evaluation:} Single Urban Macro scenario with fixed frequency (3.5 GHz) and uniform distributions limits diversity. Single-scenario testing provides no statistical confidence intervals.
+
+\section{Future Research Directions}
+
+\textbf{Robustness:} Incorporate CSI estimation errors during training through noisy channel augmentation or pilot-based estimation. Model realistic SIC with residual interference to learn conservative pairing strategies.
+
+\textbf{Multi-Cell Coordination:} Extend graphs across cells with edges representing inter-cell interference. Enable coordinated pairing through message passing across cell boundaries. Implement federated learning for distributed training.
+
+\textbf{Dynamic Adaptation:} Use recurrent GNNs to track temporal channel evolution and predict future states. Enable online learning through gradient descent on streaming data for continual adaptation without full retraining.
+
+\textbf{Scalability:} Reduce edges from $O(N^2)$ to $O(kN)$ using k-nearest neighbor graphs. Implement hierarchical GNNs clustering users before fine-grained pairing. Apply model compression (pruning, quantization) for edge devices.
+
+\textbf{Advanced Architectures:} Explore Graph Attention Networks for interpretable neighbor weighting. Test Graph Transformers for global dependency capture. Design hypergraph networks for 3+ user groups.
+
+\textbf{System Integration:} Joint optimization with massive MIMO beamforming. Extension to mmWave bands with beam alignment. Integration with network slicing for diverse QoS requirements.
+
+\textbf{Real-World Validation:} Over-the-air experiments with software-defined radios. Integration into 5G testbeds (OpenAirInterface). Optimization for edge platforms (NVIDIA Jetson). Development of RAN Intelligent Controller APIs.
+
+\section{Broader Impact}
+
+This work demonstrates that GNNs can effectively solve combinatorial wireless optimization problems, providing a template for beam selection, spectrum allocation, and routing. The graph reformulation approach, multi-task learning framework, and training on optimal demonstrations offer techniques applicable throughout the wireless protocol stack. By bridging theoretical optimality and practical deployment, this research advances data-driven network optimization for intelligent 5G/6G systems.
+
+\section{Closing Remarks}
+
+NOMA-GNN achieves near-optimal wireless resource allocation (96.5\% throughput) with practical computational complexity (52.9× speedup), enabling real-time scheduling for dense networks. The comprehensive evaluation on realistic 3GPP channel models with 500 users establishes viability for dense 5G/6G deployments where traditional methods fail.
+
+While limitations remain—perfect CSI assumptions, single-cell scenarios, limited statistical validation—the work provides a foundation for production-ready systems. The identified future directions offer a roadmap toward robust, scalable, multi-cell NOMA systems.
+
+As wireless networks evolve toward massive connectivity and stringent latency requirements, intelligent resource allocation through graph neural networks offers a promising path forward. This thesis demonstrates that such systems are practically achievable, advancing the vision of self-optimizing networks for next-generation wireless communications.
+
+\vspace{0.5cm}
+\begin{center}
+\textit{Bridging optimal theory and practical deployment through}\\
+\textit{graph neural networks for intelligent NOMA resource allocation.}
+\end{center}

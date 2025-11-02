@@ -1,0 +1,219 @@
+\chapter{System Model and Channel Modeling}
+\label{chap:system_and_channel}
+
+This chapter presents the detailed mathematical framework governing Power-Domain NOMA transmission in our considered system, along with the comprehensive channel modeling methodology based on the 3GPP TR 38.901 Urban Macro (UMa) standard. We begin by describing the network architecture and user deployment model, then develop the NOMA signal model with rate expressions and successive interference cancellation constraints, and finally detail the standardized channel model implementation that generates realistic Channel State Information for system evaluation.
+
+\section{Network Architecture and Configuration}
+
+We consider a single-cell downlink wireless network operating in a dense urban environment characteristic of modern metropolitan areas where NOMA technology is expected to provide the most significant benefits. The base station is positioned at the center of a circular coverage area with radius $R = 5000$ meters, representative of typical Urban Macro deployments specified in 3GPP network planning guidelines. The base station antenna is mounted at height $h_{\text{BS}} = 25$ meters, corresponding to typical rooftop installations in urban environments where antenna height provides sufficient coverage while avoiding excessive shadowing from tall buildings.
+
+The base station transmitter operates at carrier frequency $f_c = 3.5$ GHz, corresponding to 5G New Radio band n78 which has been widely allocated for commercial 5G deployments globally. This frequency band represents a good compromise between coverage (lower path loss compared to millimeter-wave bands) and available bandwidth (wider channels than traditional sub-1-GHz bands). The system allocates Physical Resource Blocks with bandwidth $B = 20$ MHz each, matching standard 5G NR resource block grouping for wide-area coverage scenarios. The base station transmits with total power $P = 1.0$ W (30 dBm) per PRB, a typical power level for macro base stations that balances coverage range with inter-cell interference mitigation.
+
+The receiver noise power is determined by thermal noise characteristics according to the Nyquist formula $\sigma^2 = kTB$, where $k = 1.38 \times 10^{-23}$ J/K is Boltzmann's constant and $T = 290$ K is the standard reference temperature. This yields noise power spectral density of $N_0 = -174$ dBm/Hz, and total noise power per 20 MHz PRB of approximately $\sigma^2 = 10^{-9}$ W or $-90$ dBm. The resulting Signal-to-Noise Ratio in the cell ranges from approximately 30-40 dB for cell-center users to 0-10 dB for cell-edge users, creating the channel diversity that NOMA exploits.
+
+\subsection{User Equipment Deployment and Geometry}
+
+The system serves $N$ users distributed uniformly within the circular cell coverage area. For this thesis, we focus on high-density deployment scenarios with $N = 500$ users to evaluate algorithm performance under realistic load conditions anticipated in dense urban areas such as business districts, shopping centers, and residential high-rise complexes. Each user equipment (UE) is equipped with a single omnidirectional receive antenna and possesses perfect successive interference cancellation capability, meaning it can perfectly decode and subtract interfering signals provided the Signal-to-Interference-plus-Noise Ratio exceeds a minimum threshold.
+
+User spatial positions are generated using a uniform distribution in Cartesian coordinates within the circular cell, ensuring homogeneous user density across the coverage area without artificial clustering or hot spots. Specifically, for each user $i$, we first sample a radial distance $r_i$ from the base station according to the square-root transform $r_i = R \sqrt{U}$ where $U \sim \text{Uniform}(0,1)$, which produces uniform spatial density rather than uniform radial density. We then sample an angular position $\theta_i \sim \text{Uniform}(0, 2\pi)$ independently. The Cartesian coordinates are computed as $x_i = r_i \cos(\theta_i)$ and $y_i = r_i \sin(\theta_i)$.
+
+User equipment heights vary realistically according to 3GPP specifications for urban environments. Rather than assuming all users are at street level, we model the vertical distribution accounting for users in vehicles, pedestrians, and users in multi-story buildings. Each UE height $h_{\text{UT},i}$ is drawn independently from a uniform distribution over the range $[1.5, 22.5]$ meters, where 1.5 m represents pedestrians or users in vehicles at street level, and 22.5 m represents users in upper floors of mid-rise buildings typical of urban areas. This height distribution affects both line-of-sight probability and path loss calculations as specified in the 3GPP channel model.
+
+The three-dimensional Euclidean distance from the base station to user $i$ combines horizontal separation and vertical difference: $d_{3D,i} = \sqrt{r_i^2 + (h_{\text{BS}} - h_{\text{UT},i})^2}$. This 3D distance, rather than simple horizontal distance, determines path loss according to the 3GPP model, ensuring realistic signal propagation modeling that accounts for elevation angles and line-of-sight obstruction by buildings.
+
+\section{Power-Domain NOMA Signal Model}
+
+Having established the network geometry and user deployment, we now develop the mathematical model for Power-Domain NOMA transmission, reception, and rate analysis. The fundamental innovation of PD-NOMA lies in allowing multiple users to share the same time-frequency resources through power-domain multiplexing combined with successive interference cancellation at receivers.
+
+\subsection{Two-User Clustering and Power Allocation}
+
+For analytical tractability and practical implementation simplicity, we focus on two-user clustering where each Physical Resource Block serves exactly two users simultaneously. While larger cluster sizes theoretically offer higher spectral efficiency, they suffer from increased SIC error propagation, higher receiver complexity, and diminishing returns beyond two users per PRB based on prior research. The two-user configuration represents the optimal trade-off between performance gains and implementation complexity for current receiver technology.
+
+Consider a NOMA pair consisting of users $i$ and $j$ sharing a single PRB, where user $i$ has weaker channel gain than user $j$, i.e., $|h_i|^2 < |h_j|^2$. We refer to user $i$ as the "weak" or "cell-edge" user and user $j$ as the "strong" or "cell-center" user. The base station allocates power asymmetrically to these users according to a power allocation coefficient $\alpha \in (0,1)$: user $i$ receives power $P_i = \alpha P$ while user $j$ receives power $P_j = (1-\alpha) P$, where $P$ is the total available power for the PRB.
+
+Following NOMA principles, more power is allocated to the weaker user to compensate for its poor channel conditions, thus we typically have $\alpha > 0.5$ and often $\alpha \in [0.6, 0.9]$ depending on the channel gain disparity. This power allocation strategy serves two purposes: it ensures the weak user can achieve acceptable data rates despite its poor channel, and it creates sufficient signal strength disparity at the strong user's receiver to enable reliable successive interference cancellation.
+
+The base station performs superposition coding, transmitting the composite signal $s = \sqrt{\alpha P} \cdot x_i + \sqrt{(1-\alpha) P} \cdot x_j$ where $x_i$ and $x_j$ are unit-power information-bearing symbols for users $i$ and $j$ respectively, typically drawn from constellations such as QPSK or QAM depending on channel conditions. The power coefficients $\sqrt{\alpha P}$ and $\sqrt{(1-\alpha) P}$ weight the individual user symbols before superposition, creating the intended power allocation.
+
+\subsection{Weak User Reception and Rate Analysis}
+
+At the weak user $i$'s receiver, the received signal is $y_i = h_i s + n_i = h_i \sqrt{\alpha P} x_i + h_i \sqrt{(1-\alpha) P} x_j + n_i$, where $h_i$ is the complex channel coefficient between the base station and user $i$, and $n_i \sim \mathcal{CN}(0, \sigma^2)$ is circularly symmetric complex Gaussian noise with variance $\sigma^2 = kTB$. The weak user employs a simple single-user detector that treats the strong user's signal $h_i \sqrt{(1-\alpha) P} x_j$ as additive interference rather than attempting to decode and cancel it. This detection strategy is optimal for the weak user since attempting SIC would be futile—the weak user cannot reliably decode the strong user's signal due to insufficient received power.
+
+The Signal-to-Interference-plus-Noise Ratio at weak user $i$ is therefore:
+\begin{equation}
+\text{SINR}_i = \frac{\alpha P |h_i|^2}{(1-\alpha) P |h_i|^2 + \sigma^2} = \frac{\alpha |h_i|^2 \rho}{(1-\alpha) |h_i|^2 \rho + 1}
+\end{equation}
+where $\rho = P/\sigma^2$ is the transmit Signal-to-Noise Ratio. Note that the interference term $(1-\alpha) P |h_i|^2$ scales with user $i$'s own channel gain because both the desired signal and interference traverse the same channel. This creates an interesting trade-off: increasing $\alpha$ strengthens user $i$'s signal relative to interference, but since $1-\alpha$ decreases correspondingly, the benefit saturates as $\alpha$ approaches 1.
+
+Using the Shannon capacity formula adapted for interference-limited channels, the achievable rate for weak user $i$ in bits per second is:
+\begin{equation}
+R_i = B \log_2(1 + \text{SINR}_i) = B \log_2\left(1 + \frac{\alpha P |h_i|^2}{(1-\alpha) P |h_i|^2 + \sigma^2}\right)
+\end{equation}
+where $B = 20$ MHz is the bandwidth. This rate can be interpreted as the maximum error-free data rate user $i$ can achieve with optimal capacity-achieving codes, assuming perfect channel knowledge and infinite code length. In practice, finite-length codes and modulation constraints reduce achievable rates to approximately 70-80\% of the Shannon capacity.
+
+\subsection{Strong User Reception with Successive Interference Cancellation}
+
+The strong user $j$ employs a more sophisticated two-stage successive interference cancellation receiver that exploits its superior channel quality. The received signal at user $j$ is $y_j = h_j s + n_j = h_j \sqrt{\alpha P} x_i + h_j \sqrt{(1-\alpha) P} x_j + n_j$. Unlike the weak user, user $j$ can potentially decode both users' signals since it receives both with high power due to its strong channel gain $|h_j|^2$.
+
+In the first SIC stage, user $j$ decodes user $i$'s signal $x_i$ while treating its own signal $x_j$ as interference. The SINR for this decoding operation is:
+\begin{equation}
+\text{SINR}_{j \to i} = \frac{\alpha P |h_j|^2}{(1-\alpha) P |h_j|^2 + \sigma^2}
+\end{equation}
+This SINR is substantially higher than the weak user's SINR because $|h_j|^2 \gg |h_i|^2$ by the channel ordering assumption. If this SINR exceeds a minimum threshold $\gamma_{\text{th}}$ required for reliable decoding (typically corresponding to 8 dB to ensure bit error rates below $10^{-5}$), user $j$ successfully decodes $x_i$ and obtains an estimate $\hat{x}_i$.
+
+In the second SIC stage, user $j$ reconstructs the interference signal $h_j \sqrt{\alpha P} \hat{x}_i$ using its channel estimate $h_j$ and the decoded symbol $\hat{x}_i$, then subtracts this reconstruction from the received signal to obtain the interference-cancelled signal $\tilde{y}_j = y_j - h_j \sqrt{\alpha P} \hat{x}_i = h_j \sqrt{(1-\alpha) P} x_j + n_j + \epsilon_{\text{SIC}}$, where $\epsilon_{\text{SIC}}$ represents residual interference due to imperfect channel estimation and decoding errors. Under our perfect SIC assumption, $\epsilon_{\text{SIC}} = 0$, so user $j$ decodes its own signal interference-free with SINR:
+\begin{equation}
+\text{SINR}_j = \frac{(1-\alpha) P |h_j|^2}{\sigma^2}
+\end{equation}
+
+This SINR is typically much higher than that of user $i$ since all interference has been removed and the strong user benefits from its superior channel. The achievable rate for strong user $j$ is:
+\begin{equation}
+R_j = B \log_2(1 + \text{SINR}_j) = B \log_2\left(1 + \frac{(1-\alpha) P |h_j|^2}{\sigma^2}\right)
+\end{equation}
+
+The sum-rate for the pair $(i,j)$ is simply the sum of individual rates:
+\begin{equation}
+R_{\text{sum}}(i, j, \alpha) = R_i + R_j = B \left[ \log_2\left(1 + \frac{\alpha P |h_i|^2}{(1-\alpha) P |h_i|^2 + \sigma^2}\right) + \log_2\left(1 + \frac{(1-\alpha) P |h_j|^2}{\sigma^2}\right) \right]
+\end{equation}
+
+\subsection{SIC Feasibility Constraints}
+
+Successful successive interference cancellation is not guaranteed and requires careful management of several physical constraints. The primary constraint ensures that user $j$ can reliably decode user $i$'s signal in the first SIC stage. This requires the SIC SINR to exceed a minimum threshold determined by the required decoding reliability:
+\begin{equation}
+\text{SINR}_{j \to i} = \frac{\alpha P |h_j|^2}{(1-\alpha) P |h_j|^2 + \sigma^2} \geq \gamma_{\text{th}}
+\end{equation}
+
+The threshold $\gamma_{\text{th}}$ is typically set to 8 dB (approximately 6.31 in linear scale) based on practical receiver implementations using standard error correction codes and QPSK modulation. This threshold ensures bit error rates remain below $10^{-5}$ required for reliable higher-layer protocol operation.
+
+We can manipulate this constraint algebraically to derive a simpler channel-based condition. Assuming high SNR conditions where $P |h_j|^2 \gg \sigma^2$, the constraint simplifies to:
+\begin{equation}
+\frac{\alpha}{1-\alpha} \geq \gamma_{\text{th}} \implies \frac{\alpha |h_j|^2}{(1-\alpha) |h_j|^2} \geq \gamma_{\text{th}}
+\end{equation}
+
+For SIC to be feasible with any valid power allocation $\alpha \in (0,1)$, we need sufficient channel gain disparity between paired users:
+\begin{equation}
+\frac{|h_j|^2}{|h_i|^2} \geq \gamma_{\text{th}} \implies 10\log_{10}\left(\frac{|h_j|^2}{|h_i|^2}\right) \geq 10\log_{10}(\gamma_{\text{th}}) \approx 8 \text{ dB}
+\end{equation}
+
+This channel disparity requirement fundamentally constrains which user pairs are compatible for NOMA transmission. Users with similar channel gains cannot be paired effectively since the strong user would be unable to decode the weak user's signal reliably, causing SIC failure and severe performance degradation. This constraint is enforced during the graph construction phase of our GNN framework, ensuring all candidate pairings are physically feasible.
+
+Additionally, we impose an angular separation constraint to ensure spatial decorrelation between paired users. Users located at similar angular positions relative to the base station tend to experience correlated shadow fading and similar propagation paths, reducing channel diversity. We require paired users to have angular separation of at least $\Delta\theta_{\min} = 30$ degrees:
+\begin{equation}
+|\theta_i - \theta_j| \geq \Delta\theta_{\min} = 30°
+\end{equation}
+where $\theta_i$ and $\theta_j$ are the angular positions in polar coordinates. This geometric constraint complements the channel gain disparity requirement, ensuring robust performance across varying channel conditions.
+
+\section{3GPP TR 38.901 Urban Macro Channel Model}
+
+Accurate channel modeling is essential for credible evaluation of wireless algorithms. Rather than using simplified theoretical models such as free-space path loss or generic distance-dependent attenuation, we implement the comprehensive 3GPP TR 38.901 channel model standardized by the 3rd Generation Partnership Project. This model is widely accepted in industry and academia for 5G system evaluation, ensuring our results are comparable with other research and relevant for practical deployments.
+
+The 3GPP TR 38.901 standard specifies detailed procedures for modeling various propagation scenarios including Urban Macro (UMa), Urban Micro (UMi), Rural Macro (RMa), and Indoor Office, across the frequency range 0.5-100 GHz. We focus on the Urban Macro scenario with carrier frequency 3.5 GHz, which represents the most common 5G deployment scenario in metropolitan areas. The model decomposes the overall channel into three components: large-scale path loss depending on distance and line-of-sight condition, log-normal shadow fading representing signal variations due to large obstacles, and small-scale Rayleigh or Rician fading representing multipath propagation effects.
+
+\subsection{Line-of-Sight Probability Model}
+
+Whether a transmitter-receiver link has line-of-sight (LOS) propagation or is obstructed (NLOS) dramatically affects signal strength, with LOS paths experiencing 20-30 dB less attenuation than NLOS paths at the same distance. The 3GPP model provides a statistical LOS probability function that depends on both horizontal distance and UE height, reflecting empirical measurements from urban propagation campaigns.
+
+For the Urban Macro scenario, the LOS probability is given by the piecewise function specified in 3GPP TR 38.901 Equation (7.4.2-1):
+\begin{equation}
+P_{\text{LOS}}(r, h_{\text{UT}}) = \begin{cases}
+1, & r \leq 18 \text{ m} \\
+\frac{18}{r} + \exp\left(-\frac{r}{63}\right)\left(1 - \frac{18}{r}\right) \cdot \left(1 + C(h_{\text{UT}}) \cdot F(r)\right), & r > 18 \text{ m}
+\end{cases}
+\end{equation}
+
+where $r$ is the 2D horizontal distance in meters. The height-dependent correction factor is:
+\begin{equation}
+C(h_{\text{UT}}) = \begin{cases}
+0, & h_{\text{UT}} \leq 13 \text{ m} \\
+\left(\frac{h_{\text{UT}} - 13}{10}\right)^{1.5}, & 13 < h_{\text{UT}} < 23 \text{ m} \\
+1, & h_{\text{UT}} \geq 23 \text{ m}
+\end{cases}
+\end{equation}
+
+and the distance-dependent factor is:
+\begin{equation}
+F(r) = \frac{5}{4}\left(\frac{r}{100}\right)^3 \exp\left(-\frac{r}{150}\right)
+\end{equation}
+
+This model captures the intuition that LOS probability decreases with distance as obstacles become more likely to obstruct the direct path, and increases with UE height since elevated positions are less likely to be blocked by street-level obstacles. For each user, we determine LOS/NLOS status by sampling a Bernoulli random variable with success probability $P_{\text{LOS}}(r_i, h_{\text{UT},i})$.
+
+\subsection{Path Loss Models for LOS and NLOS}
+
+Path loss quantifies the signal power attenuation due to propagation through the wireless medium, accounting for spreading loss as electromagnetic energy disperses spherically, absorption by atmospheric gases and precipitation, diffraction around obstacles, and reflection/scattering from buildings and terrain. The 3GPP model provides separate path loss formulas for LOS and NLOS conditions.
+
+For line-of-sight propagation, the Urban Macro path loss in decibels is given by 3GPP TR 38.901 Equation (7.4.1-1):
+\begin{equation}
+PL_{\text{UMa-LOS}}(d_{3D}, f_c) = 28.0 + 22 \log_{10}(d_{3D}) + 20 \log_{10}\left(\frac{f_c}{10^9}\right)
+\end{equation}
+where $d_{3D}$ is the 3D distance in meters and $f_c$ is the carrier frequency in Hz. This formula exhibits approximately $22 \log_{10}(d)$ distance dependence (between free-space's 20 and two-ray ground reflection's 40), and $20 \log_{10}(f)$ frequency dependence reflecting the fact that higher frequencies suffer greater atmospheric absorption and diffraction loss.
+
+For non-line-of-sight propagation where the direct path is blocked by buildings or terrain, the path loss is significantly higher, given by 3GPP TR 38.901 Equation (7.4.1-2):
+\begin{equation}
+PL_{\text{UMa-NLOS}}(d_{3D}, f_c, h_{\text{UT}}) = 13.54 + 39.08 \log_{10}(d_{3D}) + 20 \log_{10}\left(\frac{f_c}{10^9}\right) - 0.6(h_{\text{UT}} - 1.5)
+\end{equation}
+
+The NLOS path loss exhibits much stronger distance dependence ($39.08 \log_{10}(d)$ versus $22 \log_{10}(d)$ for LOS), reflecting the fact that NLOS signals propagate via diffraction and multiple reflections that attenuate more severely with distance. The height correction term $-0.6(h_{\text{UT}} - 1.5)$ provides modest path loss reduction for elevated UEs that can receive signals via elevated reflections and scattering.
+
+These path loss values are converted from decibels to linear scale via $PL_{\text{linear}} = 10^{-PL_{\text{dB}}/10}$ for use in power calculations.
+
+\subsection{Log-Normal Shadow Fading}
+
+Shadow fading represents large-scale signal variations caused by obstacles such as buildings, hills, and foliage that create local shadow regions. Unlike path loss which is deterministic given distance and LOS status, shadow fading is random and accounts for site-specific propagation variations not captured by distance-dependent models. The 3GPP model represents shadow fading as a log-normal random variable: in decibel scale, it is Gaussian distributed as $SF_{\text{dB}} \sim \mathcal{N}(0, \sigma_{SF}^2)$, with standard deviation depending on LOS condition.
+
+According to 3GPP TR 38.901 Table 7.4.1-1, the shadow fading standard deviation for Urban Macro is:
+\begin{equation}
+\sigma_{SF} = \begin{cases}
+4 \text{ dB}, & \text{LOS} \\
+6 \text{ dB}, & \text{NLOS}
+\end{cases}
+\end{equation}
+
+The larger NLOS standard deviation reflects greater propagation variability when signals traverse complex multi-path environments. Shadow fading is generated independently for each user by sampling $SF_{dB,i} \sim \mathcal{N}(0, \sigma_{SF}^2)$ and converting to linear scale via $SF_{\text{linear},i} = 10^{SF_{dB,i}/10}$.
+
+In realistic deployments, shadow fading exhibits spatial correlation where nearby users experience similar shadowing effects since they share similar propagation paths. The 3GPP model specifies correlation functions based on inter-user distance, but for simplicity and conservative performance evaluation, we assume independent shadow fading across users.
+
+\subsection{Small-Scale Rayleigh Fading}
+
+Small-scale fading represents rapid signal fluctuations over short distances (on the order of wavelength $\lambda = c/f_c \approx 8.6$ cm at 3.5 GHz) caused by constructive and destructive interference of multipath components. As the receiver moves even a few centimeters, the relative phases of multipath arrivals change, causing significant variation in received signal strength.
+
+For non-line-of-sight propagation where no dominant path exists and signals arrive via many scattered paths with random phases, the channel magnitude follows a Rayleigh distribution. The complex channel coefficient is modeled as $g_i \sim \mathcal{CN}(0,1)$, meaning the real and imaginary parts are independent Gaussian random variables with variance $1/2$ each. The channel power gain $|g_i|^2$ then follows an exponential distribution with mean 1.
+
+For line-of-sight propagation, a dominant direct path exists in addition to scattered paths, producing Rician fading with K-factor (ratio of dominant path power to scattered path power) typically around 9 dB for Urban Macro scenarios. However, for analytical simplicity and to provide conservative performance estimates, we apply Rayleigh fading for all users regardless of LOS status. This assumption is reasonable since our focus is on user pairing strategies which are primarily determined by large-scale channel differences rather than small-scale fading realizations.
+
+\subsection{Composite Channel Gain and Dataset Generation}
+
+The overall channel power gain combines all three propagation components multiplicatively:
+\begin{equation}
+|h_i|^2 = PL_{\text{linear},i} \cdot SF_{\text{linear},i} \cdot |g_i|^2
+\end{equation}
+
+where $PL_{\text{linear},i}$ is the large-scale path loss (LOS or NLOS depending on the user's condition), $SF_{\text{linear},i}$ is the log-normal shadow fading gain, and $|g_i|^2$ is the small-scale Rayleigh fading power gain. In decibel scale, this corresponds to addition:
+\begin{equation}
+|h_i|^2_{\text{dB}} = -PL_{dB,i} + SF_{dB,i} + |g_i|^2_{\text{dB}}
+\end{equation}
+
+For training the proposed Graph Neural Network and evaluating all pairing algorithms, we generate a comprehensive dataset of 200 independent channel realizations, each containing $N = 500$ users for a total of 100,000 user instances. Each scenario follows the complete generation procedure: users are uniformly deployed in the circular cell with random positions and heights, LOS/NLOS status is determined probabilistically for each user based on distance and height, appropriate path loss formula is applied based on LOS status, log-normal shadow fading is sampled independently, Rayleigh fading is generated, and all components are combined to produce the composite channel gain.
+
+The resulting channel gains exhibit realistic statistical properties with dynamic range of approximately 60-80 dB from strongest cell-center users to weakest cell-edge users, log-normal distribution in linear scale as expected from the product of multiple random components, and spatial correlation where users at similar distances experience similar average channel gains despite independent fading realizations. This dataset provides the foundation for all subsequent pairing algorithms and performance evaluation, ensuring results reflect realistic propagation conditions rather than idealized theoretical models.
+
+\section{Performance Metrics and Evaluation Framework}
+
+To comprehensively evaluate user pairing algorithms, we define multiple performance metrics spanning throughput, fairness, computational efficiency, and solution quality dimensions.
+
+The primary metric is system sum-rate measuring total throughput across all successfully paired users. For a pairing solution $\mathcal{P} = \{(i_1, j_1), (i_2, j_2), \ldots, (i_K, j_K)\}$ containing $K$ pairs, the sum-rate is:
+\begin{equation}
+R_{\text{total}} = \sum_{k=1}^{K} \left( R_{i_k} + R_{j_k} \right)
+\end{equation}
+measured in bits per second or Gbps for convenience. Higher sum-rate indicates better spectral efficiency and network capacity.
+
+We also measure fairness using Jain's fairness index which quantifies how equitably throughput is distributed across users:
+\begin{equation}
+\text{Fairness} = \frac{\left(\sum_{i=1}^{N_{\text{paired}}} R_i\right)^2}{N_{\text{paired}} \sum_{i=1}^{N_{\text{paired}}} R_i^2}
+\end{equation}
+where $N_{\text{paired}}$ is the number of successfully paired users. This index ranges from $1/N$ (completely unfair, one user gets all throughput) to 1 (perfectly fair, all users receive equal throughput). Higher values indicate more equitable resource allocation.
+
+Computational complexity is measured both theoretically through asymptotic analysis and empirically through wall-clock execution time. We report average execution time across 50 independent runs to account for implementation variations and system load effects, ensuring statistical reliability of timing measurements.
+
+For learning-based methods, we measure pairing accuracy as the fraction of predicted pairs that match the optimal Blossom algorithm solution, and generalization performance by evaluating on scenarios with different user densities and channel statistics than the training set. These metrics assess whether the learned model captures fundamental pairing principles rather than merely memorizing training data.
+
+This comprehensive evaluation framework enables fair comparison of diverse approaches across multiple dimensions relevant for practical deployment, ensuring no single metric dominates the assessment and revealing trade-offs between competing objectives.

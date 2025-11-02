@@ -1,0 +1,1255 @@
+\documentclass[12pt,a4paper]{article}
+
+% ==================== PACKAGES ====================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ==================== PAGE SETUP ====================
+\geometry{margin=1in}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\thepage}
+\lhead{NOMA System Documentation}
+
+% ==================== HYPERREF SETUP ====================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=green,
+}
+
+% ==================== CODE LISTING SETUP ====================
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    captionpos=b
+}
+
+% ==================== CUSTOM COMMANDS ====================
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{\textbf{#1}}}
+
+% ==================== TITLE INFORMATION ====================
+\title{
+    \textbf{NOMA User Pairing and Clustering System}\\
+    \Large{Code Documentation and Technical Reference}
+}
+\author{NOMA Research Team}
+\date{November 2, 2025\\Version 1.0}
+
+% ==================== DOCUMENT BEGIN ====================
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+This document provides a comprehensive technical explanation of the \code{noma.py} implementation, which simulates and analyzes Non-Orthogonal Multiple Access (NOMA) clustering strategies for 5G wireless communication systems. The implementation follows 3GPP TR 38.901 channel models and includes multiple user pairing algorithms ranging from simple heuristics to sophisticated graph-based optimizations. This documentation covers all mathematical formulations, algorithmic details, and implementation specifics.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ==================== SECTION 1: INITIALIZATION ====================
+\section{Initialization and Parameters}
+
+This section describes the initial setup, parameter definitions, and library dependencies required for the NOMA simulation system.
+
+\subsection{Library Imports}
+
+The implementation utilizes the following Python libraries:
+
+\begin{lstlisting}[caption={Required Library Imports}]
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import networkx as nx
+from tqdm import tqdm
+import os
+import time
+from datetime import datetime
+import seaborn as sns
+from matplotlib.patches import Circle
+\end{lstlisting}
+
+\textbf{Purpose of each library:}
+\begin{itemize}
+    \item \texttt{numpy}: Numerical computations and array operations
+    \item \texttt{matplotlib}: Visualization and plotting
+    \item \texttt{pandas}: Data manipulation and CSV operations
+    \item \texttt{networkx}: Graph algorithms for optimal pairing
+    \item \texttt{tqdm}: Progress bar visualization
+    \item \texttt{os, time, datetime}: File operations and timestamping
+    \item \texttt{seaborn}: Enhanced statistical visualizations
+\end{itemize}
+
+\subsection{System Parameters}
+
+The following parameters define the physical and operational characteristics of the NOMA system, following 3GPP TR 38.901, Section 7.4.1 \& 7.4.2 for Urban Macro (UMa) scenario:
+
+\begin{align}
+N &= 500 \quad \text{(Number of users)} \\
+R_{\text{cell}} &= 5000 \text{ m} \quad \text{(Cell radius)} \\
+f_c &= 3.5 \times 10^9 \text{ Hz} \quad \text{(Carrier frequency)} \\
+c &= 3 \times 10^8 \text{ m/s} \quad \text{(Speed of light)} \\
+\lambda_c &= \frac{c}{f_c} \quad \text{(Wavelength)} \\
+h_{BS} &= 25 \text{ m} \quad \text{(Base station height)} \\
+\alpha &= 3.5 \quad \text{(Path loss exponent)} \\
+\sigma_{\text{shadow}} &= 8 \text{ dB} \quad \text{(Shadowing standard deviation)} \\
+P_{\text{noise}} &= 10^{-9} \text{ W} \quad \text{(Noise power)} \\
+P_{\text{total}} &= 1.0 \text{ W} \quad \text{(Total transmission power)} \\
+\gamma_{SIC} &= 8 \text{ dB} \quad \text{(SIC threshold)} \\
+B_{\text{total}} &= 20 \text{ MHz} \quad \text{(Total bandwidth)}
+\end{align}
+
+\subsection{Optimization Parameters}
+
+Additional parameters control the optimization and matching algorithms:
+
+\begin{align}
+\theta_{\min} &= 25° \quad \text{(Angular separation guard for bipartite matching)} \\
+\epsilon_{PF} &= 10^{-12} \quad \text{(Proportional fairness epsilon)} \\
+\text{TOL}_{\text{power}} &= 10^{-4} \quad \text{(Power optimization tolerance)} \\
+\text{MAXIT}_{\text{power}} &= 80 \quad \text{(Maximum power optimization iterations)} \\
+\epsilon_{\text{channel}} &= 10^{-12} \quad \text{(Channel gain log calculation epsilon)} \\
+\sigma_{\text{threshold}} &= 1.0 \quad \text{(Standard deviation threshold for adaptive classification)}
+\end{align}
+
+\subsection{Results Directory Creation}
+
+The system creates a timestamped directory for organized result storage:
+
+\begin{lstlisting}[caption={Directory Creation}]
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+results_dir = os.path.join("results", f"results_{timestamp}")
+os.makedirs(results_dir, exist_ok=True)
+\end{lstlisting}
+
+This ensures that simulation results are organized chronologically and prevents data overwrite from multiple runs.
+
+% ==================== SECTION 2: USER PLACEMENT ====================
+\section{User Placement}
+
+\subsection{Random Spatial Distribution}
+
+Users are distributed uniformly across the circular cell coverage area. The mathematical formulation ensures uniform spatial density:
+
+\begin{align}
+r_i &\sim \sqrt{\mathcal{U}(0, R_{\text{cell}}^2)} \quad \text{(Radial distance)} \\
+\theta_i &\sim \mathcal{U}(0, 2\pi) \quad \text{(Azimuth angle)} \\
+x_i &= r_i \cos(\theta_i) \quad \text{(X-coordinate)} \\
+y_i &= r_i \sin(\theta_i) \quad \text{(Y-coordinate)} \\
+h_{UT,i} &\sim \mathcal{U}(1.5, 22.5) \text{ m} \quad \text{(User terminal height)}
+\end{align}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={User Placement Algorithm}]
+r = np.sqrt(np.random.uniform(0, radius**2, N))
+theta = np.random.uniform(0, 2*np.pi, N)
+x_coords, y_coords = r * np.cos(theta), r * np.sin(theta)
+h_UTs = np.random.uniform(1.5, 22.5, N)
+\end{lstlisting}
+
+\textbf{Rationale:}
+\begin{itemize}
+    \item The square root transformation of the radial distance ensures uniform spatial density (not just uniform radius)
+    \item Without the square root, users would cluster near the cell center
+    \item Height range follows 3GPP UMa specifications for user terminal heights
+\end{itemize}
+
+% ==================== SECTION 3: CHANNEL MODELING ====================
+\section{Channel Modeling}
+
+\subsection{Line-of-Sight (LOS) Probability}
+
+The LOS probability follows the 3GPP TR 38.901, Equation 7.4.2-1 for UMa scenario:
+
+\subsubsection{Height-Dependent Factor}
+
+\begin{equation}
+C(h_{UT}) = \begin{cases}
+0 & h_{UT} \leq 13 \text{ m} \\
+\left(\frac{h_{UT} - 13}{10}\right)^{1.5} & 13 < h_{UT} < 23 \text{ m} \\
+\left(\frac{23 - 13}{10}\right)^{1.5} & h_{UT} \geq 23 \text{ m}
+\end{cases}
+\end{equation}
+
+\subsubsection{LOS Probability Function}
+
+\begin{equation}
+P_{LOS}(d_{2D}, h_{UT}) = \begin{cases}
+1 & d_{2D} \leq 18 \text{ m} \\
+\displaystyle\frac{18}{d_{2D}} + e^{-d_{2D}/63}\left(1 - \frac{18}{d_{2D}}\right) \times \\
+\displaystyle\left[1 + C(h_{UT}) \cdot \frac{5}{4}\left(\frac{d_{2D}}{100}\right)^3 e^{-d_{2D}/150}\right] & d_{2D} > 18 \text{ m}
+\end{cases}
+\end{equation}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={LOS Probability Calculation}]
+def C_hUT(h_UT):
+    if h_UT <= 13:
+        return 0
+    elif h_UT < 23:
+        return ((h_UT - 13) / 10) ** 1.5
+    else:
+        return ((23 - 13) / 10) ** 1.5
+
+def prob_LOS_UMa(d_2D_out, h_UT):
+    P_LOS = np.zeros_like(d_2D_out, dtype=float)
+    mask1 = d_2D_out <= 18
+    P_LOS[mask1] = 1.0
+    mask2 = ~mask1
+    C_val = np.array([C_hUT(h) for h in h_UT])
+    P_LOS[mask2] = (
+        (18 / d_2D_out[mask2]) +
+        np.exp(-d_2D_out[mask2] / 63) * (1 - 18 / d_2D_out[mask2])
+    ) * (
+        1 + C_val[mask2] * (5/4) * ((d_2D_out[mask2] / 100) ** 3) *
+        np.exp(-d_2D_out[mask2] / 150)
+    )
+    return np.clip(P_LOS, 0, 1)
+\end{lstlisting}
+
+\subsection{Path Loss Models}
+
+The 3GPP UMa path loss models differentiate between LOS and NLOS conditions:
+
+\subsubsection{LOS Path Loss}
+
+\begin{equation}
+\text{PL}_{LOS}(d_{3D}, f_c) = 28.0 + 22 \log_{10}(d_{3D}) + 20 \log_{10}\left(\frac{f_c}{10^9}\right) \quad \text{(dB)}
+\end{equation}
+
+\subsubsection{NLOS Path Loss}
+
+\begin{equation}
+\text{PL}_{NLOS}(d_{3D}, f_c, h_{UT}) = 13.54 + 39.08 \log_{10}(d_{3D}) + 20 \log_{10}\left(\frac{f_c}{10^9}\right) - 0.6(h_{UT} - 1.5) \quad \text{(dB)}
+\end{equation}
+
+where the 3D distance is:
+
+\begin{equation}
+d_{3D} = \sqrt{r^2 + (h_{BS} - h_{UT})^2}
+\end{equation}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Path Loss Models}]
+def PL_UMa_LOS(d_3D, fc):
+    return 28.0 + 22 * np.log10(d_3D) + 20 * np.log10(fc / 1e9)
+
+def PL_UMa_NLOS(d_3D, fc, h_UT):
+    return (13.54 + 39.08 * np.log10(d_3D) + 20 * np.log10(fc / 1e9) - 
+            0.6 * (h_UT - 1.5))
+\end{lstlisting}
+
+\subsection{Complete Channel Gain Calculation}
+
+The complete channel model combines large-scale and small-scale fading:
+
+\subsubsection{Channel Components}
+
+\begin{align}
+d_{3D,i} &= \sqrt{r_i^2 + (h_{BS} - h_{UT,i})^2} \\
+\text{LOS}_i &\sim \text{Bernoulli}(P_{LOS}(r_i, h_{UT,i})) \\
+\text{PL}_i &= \begin{cases}
+\text{PL}_{LOS}(d_{3D,i}, f_c) & \text{if } \text{LOS}_i = 1 \\
+\text{PL}_{NLOS}(d_{3D,i}, f_c, h_{UT,i}) & \text{if } \text{LOS}_i = 0
+\end{cases} \\
+\xi_i &\sim \mathcal{N}(0, \sigma_{\text{shadow}}^2) \quad \text{(Log-normal shadowing, dB)} \\
+\psi_i &= \begin{cases}
+\text{Rician}(K) & \text{if } \text{LOS}_i = 1 \\
+\text{Rayleigh}(1/\sqrt{2}) & \text{if } \text{LOS}_i = 0
+\end{cases}
+\end{align}
+
+\subsubsection{Rician Fading (LOS Users)}
+
+For LOS users, Rician fading is applied with K-factor:
+
+\begin{align}
+K &= 9 \text{ dB} \quad \text{(Rician K-factor for UMa LOS)} \\
+K_{\text{linear}} &= 10^{K/10} \\
+s &= \sqrt{\frac{K_{\text{linear}}}{K_{\text{linear}} + 1}} \\
+\sigma &= \sqrt{\frac{1}{2(K_{\text{linear}} + 1)}} \\
+\psi &= |s + \sigma \cdot Z_{\text{real}} + j \cdot \sigma \cdot Z_{\text{imag}}| \quad Z \sim \mathcal{N}(0,1)
+\end{align}
+
+\subsubsection{Combined Channel Gain}
+
+\begin{align}
+h_i &= \psi_i \cdot \sqrt{10^{-\text{PL}_i/10} \cdot 10^{-\xi_i/10}} \\
+h_{i,dB} &= 20 \log_{10}(h_i + \epsilon_{\text{channel}})
+\end{align}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Complete Channel Gain Calculation}]
+d_3D = np.sqrt(r**2 + (h_BS - h_UTs)**2)
+P_LOS_users = prob_LOS_UMa(r, h_UTs)
+
+PL_dB = np.zeros(N)
+is_LOS = np.zeros(N, dtype=bool)
+
+for i in range(N):
+    if np.random.rand() <= P_LOS_users[i]:
+        PL_dB[i] = PL_UMa_LOS(d_3D[i], fc)
+        is_LOS[i] = True
+    else:
+        PL_dB[i] = PL_UMa_NLOS(d_3D[i], fc, h_UTs[i])
+        is_LOS[i] = False
+
+pl_linear = 10 ** (-PL_dB / 10)
+shadowing = np.random.normal(0, shadow_std_db, N)
+
+# Small-scale fading
+fading = np.zeros(N)
+K_factor_LOS = 9  # dB
+K_linear = 10 ** (K_factor_LOS / 10)
+
+for i in range(N):
+    if is_LOS[i]:
+        s = np.sqrt(K_linear / (K_linear + 1))
+        sigma = np.sqrt(1 / (2 * (K_linear + 1)))
+        complex_fading = np.random.normal(s, sigma) + 1j * np.random.normal(0, sigma)
+        fading[i] = np.abs(complex_fading)
+    else:
+        fading[i] = np.random.rayleigh(scale=1/np.sqrt(2))
+
+# Combined channel gain
+channel_gain_linear = fading * np.sqrt(pl_linear * 10**(-shadowing/10))
+h_values = channel_gain_linear
+h_db = 20 * np.log10(h_values + CHANNEL_GAIN_EPS)
+\end{lstlisting}
+
+% ==================== SECTION 4: VISUALIZATION ====================
+\section{Visualization Functions}
+
+The system includes comprehensive visualization capabilities for analysis and presentation.
+
+\subsection{User Distribution Plot}
+
+\textbf{Function:} \code{plot\_user\_distribution()}
+
+\textbf{Purpose:} Visualizes the spatial distribution of users in the cell with color-coded channel gains.
+
+\textbf{Output Features:}
+\begin{itemize}
+    \item 2D scatter plot showing user positions $(x_i, y_i)$
+    \item Cell boundary circle
+    \item Channel gain represented as color intensity
+    \item High-resolution output (300 DPI)
+\end{itemize}
+
+\subsection{Channel Characteristics Plot}
+
+\textbf{Function:} \code{plot\_channel\_characteristics()}
+
+\textbf{Purpose:} Multi-panel visualization of channel statistics with four subplots:
+\begin{enumerate}
+    \item Channel gain histogram
+    \item Path loss vs. distance scatter plot
+    \item Fading coefficient distribution
+    \item Sorted channel gains curve
+\end{enumerate}
+
+\subsection{Pairing Visualization}
+
+\textbf{Function:} \code{plot\_pairing\_visualization(pairs\_indices, name, clustering\_data)}
+
+\textbf{Purpose:} Shows NOMA pair connections with the following features:
+\begin{itemize}
+    \item Lines connecting paired users
+    \item Color-coded by pair
+    \item Only valid SIC-satisfying pairs shown
+    \item Spatial distribution of paired vs. unpaired users
+\end{itemize}
+
+\subsection{Clustering Comparison}
+
+\textbf{Function:} \code{plot\_clustering\_comparison()}
+
+\textbf{Purpose:} Comparative analysis across all clustering methods:
+\begin{itemize}
+    \item Total throughput bar chart
+    \item NOMA vs. OMA user distribution
+    \item Average rate comparison
+    \item Throughput share pie chart
+\end{itemize}
+
+% ==================== SECTION 5: CORE NOMA FUNCTIONS ====================
+\section{Core NOMA Functions}
+
+\subsection{SIC Rate Calculation}
+
+NOMA pairs users with different channel conditions on the same resource block. The user with better channel conditions (strong user) performs Successive Interference Cancellation (SIC).
+
+\subsubsection{Power Allocation}
+
+For a pair $(i,j)$ where $h_i \leq h_j$:
+
+\begin{align}
+P_i &= P_{\text{total}} \cdot \frac{h_j}{h_i + h_j} \quad \text{(Power to weak user)} \\
+P_j &= P_{\text{total}} \cdot \frac{h_i}{h_i + h_j} \quad \text{(Power to strong user)}
+\end{align}
+
+\subsubsection{Data Rates}
+
+\begin{align}
+R_i &= \log_2\left(1 + \frac{P_i h_i}{P_j h_i + P_{\text{noise}}}\right) \quad \text{(Weak user rate)} \\
+R_j &= \log_2\left(1 + \frac{P_j h_j}{P_{\text{noise}}}\right) \quad \text{(Strong user rate after SIC)} \\
+R_{\text{sum}} &= R_i + R_j \quad \text{(Total pair rate)}
+\end{align}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={SIC Rate Calculation}]
+def calc_pair_rate(h1, h2):
+    P1, P2 = total_power * h2 / (h1 + h2), total_power * h1 / (h1 + h2)
+    R1 = np.log2(1 + (P1 * h1) / (P2 * h1 + noise_power))
+    R2 = np.log2(1 + (P2 * h2) / noise_power)
+    return P1, P2, R1, R2, R1 + R2
+\end{lstlisting}
+
+\subsection{SIC Condition Check}
+
+For successful SIC, the strong user must have sufficient channel gain advantage:
+
+\begin{equation}
+\text{SIC feasible if: } \frac{h_j}{h_i} \geq 10^{\gamma_{SIC}/10}
+\end{equation}
+
+where $h_i \leq h_j$ and $\gamma_{SIC} = 8$ dB.
+
+\textbf{Physical Meaning:} The strong user must be able to decode the weak user's signal before canceling it and decoding its own signal.
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={SIC Feasibility Check}]
+def sic_satisfied(h1, h2):
+    return 10 * np.log10(h2 / h1) >= sic_threshold_db
+\end{lstlisting}
+
+\subsection{Angular Separation Helper}
+
+For spatial diversity, pairs should be separated in angle:
+
+\begin{equation}
+\Delta\theta(a, b) = \min(|a - b|, 2\pi - |a - b|) \quad \text{where } a, b \in [0, 2\pi)
+\end{equation}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Angular Difference Calculation}]
+def angle_diff_rad(a, b):
+    d = np.abs(a - b) % (2*np.pi)
+    return np.minimum(d, 2*np.pi - d)
+\end{lstlisting}
+
+\subsection{Power Optimization}
+
+\subsubsection{Objective Functions}
+
+Two optimization objectives are supported:
+
+\begin{align}
+\text{Sum-Rate: } &\max_{P_1} \quad R_1(P_1) + R_2(P_1) \\
+\text{Proportional Fair: } &\max_{P_1} \quad \log(R_1(P_1) + \epsilon_{PF}) + \log(R_2(P_1) + \epsilon_{PF})
+\end{align}
+
+Subject to: $P_1 + P_2 = P_{\text{total}}$ and $P_1, P_2 > 0$
+
+\subsubsection{Golden Section Search Method}
+
+The optimization uses the Golden Section Search algorithm:
+
+\begin{align}
+\phi &= \frac{\sqrt{5} - 1}{2} \approx 0.618 \quad \text{(Golden ratio)} \\
+[a, b] &\leftarrow [0, P_{\text{total}}] \quad \text{(Initial interval)} \\
+c &= b - \phi(b - a) \\
+d &= a + \phi(b - a)
+\end{align}
+
+\textbf{Iteration:}
+\begin{itemize}
+    \item If $U(c) < U(d)$: $a \leftarrow c$
+    \item Else: $b \leftarrow d$
+    \item Until: $|b - a| < \text{TOL}_{\text{power}}$
+\end{itemize}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Power Optimization via Golden Section Search}]
+def optimize_pair_power(h1, h2, objective='sum', w1=1.0, w2=1.0,
+                        tol=POWER_OPT_TOL, max_iter=POWER_OPT_MAXIT):
+    lo = 1e-9
+    hi = total_power - 1e-9
+    gr = (np.sqrt(5) - 1) / 2
+
+    def U(P1):
+        R1, R2, Rsum, _, _ = _pair_rates_given_P1(h1, h2, P1)
+        if objective == 'pf':
+            return np.log(R1 + PF_EPS) + np.log(R2 + PF_EPS)
+        else:
+            return Rsum
+
+    c = hi - gr * (hi - lo)
+    d = lo + gr * (hi - lo)
+    uc, ud = U(c), U(d)
+
+    it = 0
+    while (hi - lo) > tol and it < max_iter:
+        if uc < ud:
+            lo = c
+            c = d
+            uc = ud
+            d = lo + gr * (hi - lo)
+            ud = U(d)
+        else:
+            hi = d
+            d = c
+            ud = uc
+            c = hi - gr * (hi - lo)
+            uc = U(c)
+        it += 1
+
+    P1_opt = 0.5 * (lo + hi)
+    R1, R2, Rsum, P1_opt, P2_opt = _pair_rates_given_P1(h1, h2, P1_opt)
+    return P1_opt, P2_opt, R1, R2, Rsum
+\end{lstlisting}
+
+% ==================== SECTION 6: CLUSTERING ALGORITHMS ====================
+\section{Clustering Algorithms}
+
+\subsection{Common Clustering Framework}
+
+All clustering methods use a common evaluation framework:
+
+\subsubsection{Process Flow}
+
+\begin{enumerate}
+    \item Iterate through candidate pairs
+    \item For each pair $(u_1, u_2)$:
+    \begin{itemize}
+        \item Order: $h_1 \leq h_2$
+        \item Check SIC: $10\log_{10}(h_2/h_1) \geq \gamma_{SIC}$
+        \item If \code{power\_opt}: run optimization
+        \item Else: use baseline power allocation
+        \item Mark users as paired
+    \end{itemize}
+    \item Remaining users $\rightarrow$ OMA mode
+    \item Compute bandwidth allocation: $B_{\text{unit}} = \frac{B_{\text{total}}}{N_{\text{pairs}} + N_{\text{OMA}}}$
+    \item Calculate throughput: $T = R \cdot B_{\text{unit}}$
+\end{enumerate}
+
+\subsubsection{OMA User Rate}
+
+Users that cannot be paired use OMA:
+
+\begin{equation}
+R_{OMA,i} = \log_2\left(1 + \frac{P_{\text{total}} \cdot h_i}{P_{\text{noise}}}\right)
+\end{equation}
+
+\subsection{Static Clustering}
+
+\subsubsection{Algorithm}
+
+\begin{align}
+\text{Let } &\pi = \text{argsort}(h) \quad \text{(sorted indices by channel gain)} \\
+\text{Pairs: } &\{(\pi[i], \pi[N-1-i]) : i = 0, 1, \ldots, \lfloor N/2 \rfloor - 1\}
+\end{align}
+
+\subsubsection{Characteristics}
+
+\begin{itemize}
+    \item Pairs weakest with strongest
+    \item Maximum channel gain difference
+    \item Simple $O(N \log N)$ complexity
+    \item May violate SIC constraints for extreme cases
+\end{itemize}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Static Clustering}]
+static_indices = [(sorted_indices[i], sorted_indices[N-1-i]) 
+                  for i in range(N//2)]
+\end{lstlisting}
+
+\subsection{Balanced Clustering}
+
+\subsubsection{Algorithm}
+
+\begin{align}
+\text{Let } &\pi = \text{argsort}(h) \\
+\text{Pairs: } &\{(\pi[i], \pi[i + N/2]) : i = 0, 1, \ldots, \lfloor N/2 \rfloor - 1\}
+\end{align}
+
+\subsubsection{Characteristics}
+
+\begin{itemize}
+    \item Pairs lower half with upper half sequentially
+    \item More balanced channel gain differences
+    \item Better SIC satisfaction rate
+    \item $O(N \log N)$ complexity
+\end{itemize}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Balanced Clustering}]
+balanced_indices = [(sorted_indices[i], sorted_indices[i + N//2]) 
+                    for i in range(N//2)]
+\end{lstlisting}
+
+\subsection{Blossom Maximum Weight Matching}
+
+\subsubsection{Graph Theory Formulation}
+
+\begin{align}
+\text{Graph } &G = (V, E, w) \\
+V &= \{1, 2, \ldots, N\} \quad \text{(All users)} \\
+E &= \{(i,j) : \text{SIC}(h_i, h_j) = \text{True}\} \\
+w_{ij} &= R_{\text{sum}}(h_i, h_j) \\
+\text{Problem: } &\max \sum_{(i,j) \in M} w_{ij} \\
+\text{Subject to: } &M \text{ is a matching (no vertex appears twice)}
+\end{align}
+
+\subsubsection{Edmonds' Blossom Algorithm}
+
+\begin{itemize}
+    \item Finds maximum weight matching in general graphs
+    \item Polynomial time: $O(N^3)$
+    \item Guarantees global optimum
+    \item Considers all possible pairings
+\end{itemize}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Blossom Maximum Weight Matching}]
+G = nx.Graph()
+for i in range(N):
+    for j in range(i+1, N):
+        if sic_satisfied(min(h_values[i], h_values[j]), 
+                        max(h_values[i], h_values[j])):
+            _, _, _, _, R_sum = calc_pair_rate(
+                min(h_values[i], h_values[j]), 
+                max(h_values[i], h_values[j])
+            )
+            G.add_edge(i, j, weight=R_sum)
+
+blossom_indices = list(nx.max_weight_matching(G, maxcardinality=True))
+\end{lstlisting}
+
+\subsection{Bipartite PF Matching (Original)}
+
+\subsubsection{Two-Set Division}
+
+\begin{align}
+\text{Let } &\pi = \text{argsort}(h) \\
+W &= \{\pi[0], \pi[1], \ldots, \pi[N/2-1]\} \quad \text{(Weak users)} \\
+S &= \{\pi[N/2], \pi[N/2+1], \ldots, \pi[N-1]\} \quad \text{(Strong users)}
+\end{align}
+
+\subsubsection{Bipartite Graph Construction}
+
+\begin{align}
+\text{Graph } &G = (W \cup S, E, w) \\
+E &= \{(i,j) : i \in W, j \in S, \text{Guards satisfied}\}
+\end{align}
+
+\textbf{Guards:}
+\begin{align}
+&\Delta\theta(i, j) \geq \theta_{\min} \quad \text{(Angular separation)} \\
+&10\log_{10}(h_j/h_i) \geq \gamma_{SIC} \quad \text{(SIC condition)}
+\end{align}
+
+\textbf{Edge Weights (Proportional Fair):}
+\begin{equation}
+w_{ij} = \log(R_i + \epsilon_{PF}) + \log(R_j + \epsilon_{PF})
+\end{equation}
+
+\subsubsection{Properties}
+
+\begin{itemize}
+    \item Uses Hungarian algorithm or augmenting paths
+    \item $O(N^2 \log N)$ complexity
+    \item Ensures weak-strong pairing structure
+    \item Spatial diversity through angular guard
+\end{itemize}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Bipartite PF Matching}]
+def build_bipartite_pf_matching(theta_min_deg=THETA_MIN_DEG):
+    theta_min_rad = np.deg2rad(theta_min_deg)
+    weak = list(sorted_indices[:N//2])
+    strong = list(sorted_indices[N//2:])
+
+    G = nx.Graph()
+    for i in weak:
+        for j in strong:
+            if angle_diff_rad(theta[i], theta[j]) < theta_min_rad:
+                continue
+            h1, h2 = (h_values[i], h_values[j]) if h_values[i] <= h_values[j] 
+                     else (h_values[j], h_values[i])
+            if not sic_satisfied(h1, h2):
+                continue
+            _, _, R1, R2, _ = calc_pair_rate(h1, h2)
+            w = np.log(R1 + PF_EPS) + np.log(R2 + PF_EPS)
+            if np.isfinite(w):
+                G.add_edge(i, j, weight=w)
+
+    matching = nx.max_weight_matching(G, maxcardinality=True)
+    return list(matching)
+\end{lstlisting}
+
+\subsection{Adaptive Bipartite PF Matching}
+
+\subsubsection{Statistical Classification}
+
+Instead of a fixed 50-50 split, this method adaptively classifies users based on statistical properties:
+
+\begin{align}
+\mu_h &= \frac{1}{N}\sum_{i=1}^N h_{i,dB} \quad \text{(Mean channel gain)} \\
+\sigma_h &= \sqrt{\frac{1}{N}\sum_{i=1}^N (h_{i,dB} - \mu_h)^2} \quad \text{(Standard deviation)} \\
+\tau_{\text{strong}} &= \mu_h + \sigma_{\text{threshold}} \cdot \sigma_h \\
+\tau_{\text{weak}} &= \mu_h - \sigma_{\text{threshold}} \cdot \sigma_h
+\end{align}
+
+\subsubsection{User Classification}
+
+\begin{align}
+S &= \{i : h_{i,dB} \geq \tau_{\text{strong}}\} \quad \text{(Strong users)} \\
+W &= \{i : h_{i,dB} \leq \tau_{\text{weak}}\} \quad \text{(Weak users)} \\
+M &= \{i : \tau_{\text{weak}} < h_{i,dB} < \tau_{\text{strong}}\} \quad \text{(Middle users - excluded)}
+\end{align}
+
+\subsubsection{Advantages}
+
+\begin{enumerate}
+    \item \textbf{Adaptive to distribution:} Automatically adjusts to actual channel conditions
+    \item \textbf{Computational efficiency:} Smaller graph with only clear strong/weak users
+    \item \textbf{Better SIC satisfaction:} Larger channel gain differences by design
+    \item \textbf{Fairness:} Uses statistical properties rather than fixed cutoff
+\end{enumerate}
+
+\textbf{Implementation:}
+\begin{lstlisting}[caption={Adaptive Bipartite PF Matching}]
+def build_adaptive_bipartite_pf_matching(theta_min_deg=THETA_MIN_DEG, 
+                                         std_threshold=1.0):
+    theta_min_rad = np.deg2rad(theta_min_deg)
+    
+    h_mean = np.mean(h_db)
+    h_std = np.std(h_db)
+    
+    strong_threshold = h_mean + std_threshold * h_std
+    weak_threshold = h_mean - std_threshold * h_std
+    
+    strong_users = [i for i in range(N) if h_db[i] >= strong_threshold]
+    weak_users = [i for i in range(N) if h_db[i] <= weak_threshold]
+    
+    G = nx.Graph()
+    for i in weak_users:
+        for j in strong_users:
+            if angle_diff_rad(theta[i], theta[j]) < theta_min_rad:
+                continue
+            h1, h2 = h_values[i], h_values[j]
+            if not sic_satisfied(h1, h2):
+                continue
+            _, _, R1, R2, _ = calc_pair_rate(h1, h2)
+            w = np.log(R1 + PF_EPS) + np.log(R2 + PF_EPS)
+            if np.isfinite(w):
+                G.add_edge(i, j, weight=w)
+    
+    matching = nx.max_weight_matching(G, maxcardinality=True)
+    return list(matching)
+\end{lstlisting}
+
+% ==================== SECTION 7: MAIN EXECUTION ====================
+\section{Main Execution Flow}
+
+\subsection{System Initialization}
+
+The system follows this initialization sequence:
+
+\begin{enumerate}
+    \item Set random seed based on current time
+    \item Generate user positions $(x_i, y_i, h_{UT,i})$
+    \item Calculate channel gains $h_i$
+    \item Sort users by channel gain
+    \item Save channel data to CSV
+\end{enumerate}
+
+\subsection{Clustering Execution Order}
+
+The algorithms are executed in the following order:
+
+\begin{enumerate}
+    \item \textbf{Static Clustering} (baseline power allocation)
+    \item \textbf{Balanced Clustering} (baseline power allocation)
+    \item \textbf{Blossom Matching} (baseline power allocation)
+    \item \textbf{Bipartite PF Matching} (optimized power, PF objective)
+    \item \textbf{Adaptive Bipartite PF Matching} (optimized power, PF objective)
+\end{enumerate}
+
+\subsection{Performance Metrics}
+
+For each method, the following metrics are calculated:
+
+\begin{align}
+N_{\text{NOMA}} &= \text{Number of NOMA pairs formed} \\
+N_{\text{OMA}} &= N - 2 \cdot N_{\text{NOMA}} \\
+B_{\text{unit}} &= \frac{B_{\text{total}}}{N_{\text{NOMA}} + N_{\text{OMA}}} \quad \text{(MHz)} \\
+T_{\text{NOMA}} &= \sum_{\text{pairs}} R_{\text{sum}} \cdot B_{\text{unit}} \\
+T_{\text{OMA}} &= \sum_{\text{OMA users}} R_{\text{OMA}} \cdot B_{\text{unit}} \\
+T_{\text{total}} &= T_{\text{NOMA}} + T_{\text{OMA}} \quad \text{(Mbps)} \\
+\text{Coverage}_{\text{NOMA}} &= \frac{2 \cdot N_{\text{NOMA}}}{N} \times 100\%
+\end{align}
+
+\subsection{Output Files}
+
+All results are saved in the timestamped directory \code{results\_YYYYMMDD\_HHMMSS/}:
+
+\subsubsection{Channel Data File}
+
+\textbf{File:} \file{h\_values.csv}
+
+\textbf{Contents:}
+\begin{itemize}
+    \item User IDs, coordinates, distances, angles
+    \item Path loss, shadowing, fading components
+    \item Linear and dB channel gains
+\end{itemize}
+
+\subsubsection{Method-Specific Results}
+
+\textbf{Files:} \file{\{method\}\_clustering.csv}
+
+\textbf{Contents:}
+\begin{itemize}
+    \item User pair IDs
+    \item Channel gains $(h_1, h_2)$
+    \item Power allocations $(P_1, P_2)$
+    \item Rates $(R_1, R_2, R_{\text{sum}})$
+    \item Mode (NOMA/OMA)
+    \item Throughput (Mbps)
+\end{itemize}
+
+\subsubsection{Comparative Summary}
+
+\textbf{File:} \file{clustering\_summary.csv}
+
+\textbf{Contents:}
+\begin{itemize}
+    \item Total throughput per method
+    \item NOMA pairs count
+    \item OMA users count
+    \item Average rates
+    \item NOMA percentage
+\end{itemize}
+
+\subsubsection{Visualization Files}
+
+\textbf{PNG Files (300 DPI):}
+\begin{itemize}
+    \item \file{user\_distribution.png}
+    \item \file{channel\_characteristics.png}
+    \item \file{channel\_components\_analysis.png}
+    \item \file{user\_positioning\_analysis.png}
+    \item \file{\{method\}\_pairing.png}
+    \item \file{clustering\_comparison.png}
+\end{itemize}
+
+% ==================== SECTION 8: PERFORMANCE COMPARISON ====================
+\section{Performance Comparison Summary}
+
+\subsection{Complexity Analysis}
+
+\begin{table}[h]
+\centering
+\caption{Computational Complexity of Clustering Methods}
+\begin{tabular}{lc}
+\toprule
+\textbf{Method} & \textbf{Complexity} \\
+\midrule
+Static & $O(N \log N)$ \\
+Balanced & $O(N \log N)$ \\
+Blossom & $O(N^3)$ \\
+Bipartite PF & $O(N^2 \log N)$ \\
+Adaptive Bipartite PF & $O(|W| \cdot |S| \log N)$ where $|W|, |S| < N/2$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Expected Performance Ranking}
+
+\subsubsection{Throughput (Best to Worst)}
+
+\begin{enumerate}
+    \item \textbf{Blossom} (optimal, considers all pairs)
+    \item \textbf{Adaptive Bipartite PF} (power optimization + smart classification)
+    \item \textbf{Bipartite PF} (power optimization)
+    \item \textbf{Balanced} (better SIC satisfaction)
+    \item \textbf{Static} (simple pairing)
+\end{enumerate}
+
+\subsubsection{Computational Efficiency (Best to Worst)}
+
+\begin{enumerate}
+    \item \textbf{Static / Balanced} (fastest)
+    \item \textbf{Adaptive Bipartite PF} (reduced graph size)
+    \item \textbf{Bipartite PF}
+    \item \textbf{Blossom} (slowest)
+\end{enumerate}
+
+\subsubsection{Fairness (Best to Worst)}
+
+\begin{enumerate}
+    \item \textbf{Adaptive Bipartite PF} (PF objective + balanced pairing)
+    \item \textbf{Bipartite PF} (PF objective)
+    \item \textbf{Blossom} (sum-rate optimization)
+    \item \textbf{Balanced}
+    \item \textbf{Static}
+\end{enumerate}
+
+% ==================== SECTION 9: NOTATION REFERENCE ====================
+\section{Mathematical Notation Reference}
+
+\subsection{Symbol Table}
+
+\begin{table}[h]
+\centering
+\caption{Mathematical Symbols and Definitions}
+\begin{tabular}{lll}
+\toprule
+\textbf{Symbol} & \textbf{Description} & \textbf{Unit} \\
+\midrule
+$N$ & Number of users & - \\
+$h_i$ & Channel gain of user $i$ & linear \\
+$h_{i,dB}$ & Channel gain in decibels & dB \\
+$R_i$ & Data rate of user $i$ & bits/Hz \\
+$P_i$ & Power allocated to user $i$ & W \\
+$\theta_i$ & Azimuth angle of user $i$ & radians \\
+$r_i$ & Distance of user $i$ from BS & m \\
+$d_{3D,i}$ & 3D distance including height & m \\
+$\text{PL}_i$ & Path loss for user $i$ & dB \\
+$\xi_i$ & Log-normal shadowing & dB \\
+$\psi_i$ & Small-scale fading coefficient & linear \\
+$B_{\text{total}}$ & Total bandwidth & Hz \\
+$B_{\text{unit}}$ & Per-user/pair bandwidth & Hz \\
+$T$ & Throughput & bps or Mbps \\
+$\gamma_{SIC}$ & SIC threshold & dB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Operators and Functions}
+
+\begin{itemize}
+    \item $\mathcal{U}(a,b)$: Uniform distribution on $[a,b]$
+    \item $\mathcal{N}(\mu, \sigma^2)$: Normal distribution with mean $\mu$ and variance $\sigma^2$
+    \item $\text{argsort}(x)$: Indices that sort array $x$ in ascending order
+    \item $\log_2(\cdot)$: Base-2 logarithm (for information-theoretic rates in bits)
+    \item $\log_{10}(\cdot)$: Base-10 logarithm (for dB scale conversions)
+\end{itemize}
+
+% ==================== SECTION 10: REFERENCES ====================
+\section{References}
+
+\begin{enumerate}
+    \item \textbf{3GPP TR 38.901 V16.01.00:} "Study on channel model for frequencies from 0.5 to 100 GHz"
+    \begin{itemize}
+        \item Section 7.4.1: Urban Macro (UMa) scenario parameters
+        \item Section 7.4.2: Line-of-Sight probability models
+        \item Available at: \url{https://www.etsi.org/deliver/etsi_tr/138900_138999/138901/16.01.00_60/tr_138901v160100p.pdf}
+    \end{itemize}
+    
+    \item \textbf{NOMA Principles:}
+    \begin{itemize}
+        \item Power-domain multiplexing
+        \item Successive Interference Cancellation (SIC)
+        \item User pairing strategies
+    \end{itemize}
+    
+    \item \textbf{Graph Theory:}
+    \begin{itemize}
+        \item Edmonds' Blossom Algorithm for maximum matching
+        \item Bipartite matching algorithms
+        \item Hungarian algorithm for assignment problems
+    \end{itemize}
+    
+    \item \textbf{Optimization:}
+    \begin{itemize}
+        \item Golden section search for unimodal optimization
+        \item Proportional fairness objective functions
+        \item Power allocation strategies in wireless networks
+    \end{itemize}
+\end{enumerate}
+
+% ==================== SECTION 11: USAGE INSTRUCTIONS ====================
+\section{Usage Instructions}
+
+\subsection{Basic Execution}
+
+To run the simulation:
+
+\begin{verbatim}
+python noma.py
+\end{verbatim}
+
+\subsection{Expected Runtime}
+
+For $N=500$ users on a standard desktop computer:
+
+\begin{table}[h]
+\centering
+\caption{Typical Execution Times}
+\begin{tabular}{lc}
+\toprule
+\textbf{Component} & \textbf{Time} \\
+\midrule
+Static/Balanced & $< 1$ second \\
+Adaptive Bipartite & 2-5 seconds \\
+Bipartite PF & 5-10 seconds \\
+Blossom & 30-60 seconds \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Output Interpretation}
+
+\subsubsection{Console Output}
+
+The terminal displays:
+\begin{itemize}
+    \item Channel statistics (mean, range, distribution)
+    \item Per-method performance metrics
+    \item Best performing method identification
+    \item Bipartite comparison analysis
+\end{itemize}
+
+\subsubsection{CSV Files}
+
+Use for:
+\begin{itemize}
+    \item Detailed quantitative analysis
+    \item Import into MATLAB/Python for further processing
+    \item Statistical testing and validation
+    \item Custom visualization generation
+\end{itemize}
+
+\subsubsection{PNG Plots}
+
+Ready for:
+\begin{itemize}
+    \item Inclusion in papers and presentations
+    \item High resolution (300 DPI)
+    \item Professional formatting
+    \item Direct publication use
+\end{itemize}
+
+% ==================== SECTION 12: CUSTOMIZATION ====================
+\section{Customization Parameters}
+
+\subsection{Key Tunable Parameters}
+
+\begin{lstlisting}[caption={Parameters to Customize}]
+# User and network parameters
+N = 500                    # Number of users (try 100, 250, 500, 1000)
+radius = 5000              # Cell radius in meters (try 1000-10000)
+fc = 3.5e9                 # Carrier frequency (try 2.1e9, 3.5e9, 28e9)
+
+# NOMA parameters
+sic_threshold_db = 8       # SIC threshold (try 5, 8, 10, 12 dB)
+total_power = 1.0          # Total power (normalized)
+B_total = 20e6             # Bandwidth (try 10, 20, 40 MHz)
+
+# Optimization parameters
+THETA_MIN_DEG = 25         # Angular guard (try 15, 25, 35, 45 degrees)
+STD_THRESHOLD = 1.0        # Adaptive classification (try 0.5, 1.0, 1.5)
+POWER_OPT_TOL = 1e-4       # Optimization precision
+\end{lstlisting}
+
+\subsection{Adding New Clustering Methods}
+
+To implement a custom clustering algorithm:
+
+\begin{lstlisting}[caption={Custom Method Template}]
+# 1. Generate pair indices using your algorithm
+custom_pairs = my_custom_algorithm()
+
+# 2. Run clustering with the common framework
+results = perform_clustering(
+    custom_pairs, 
+    "my_method",
+    power_opt=True,  # Enable power optimization
+    objective='pf'   # Use PF objective
+)
+
+# 3. Results automatically saved and visualized
+\end{lstlisting}
+
+% ==================== SECTION 13: TROUBLESHOOTING ====================
+\section{Troubleshooting}
+
+\subsection{Common Issues and Solutions}
+
+\subsubsection{Low NOMA Pair Count}
+
+\textbf{Symptoms:} Very few NOMA pairs formed, most users in OMA mode.
+
+\textbf{Possible Causes \& Solutions:}
+\begin{itemize}
+    \item SIC threshold too strict $\rightarrow$ Reduce \code{sic\_threshold\_db}
+    \item Poor channel gain distribution $\rightarrow$ Verify channel model parameters
+    \item Angular guard too restrictive $\rightarrow$ Decrease \code{THETA\_MIN\_DEG}
+\end{itemize}
+
+\subsubsection{Poor Throughput Performance}
+
+\textbf{Symptoms:} Lower than expected system throughput.
+
+\textbf{Possible Causes \& Solutions:}
+\begin{itemize}
+    \item Non-uniform user distribution $\rightarrow$ Check spatial distribution plots
+    \item Clustering in spatial domain $\rightarrow$ Verify randomization seed
+    \item Suboptimal power allocation $\rightarrow$ Enable \code{power\_opt=True}
+\end{itemize}
+
+\subsubsection{Memory Issues with Large N}
+
+\textbf{Symptoms:} Out of memory errors for large user counts.
+
+\textbf{Solutions:}
+\begin{itemize}
+    \item Reduce $N$ or use sparse matrix representations
+    \item Process users in batches
+    \item Skip Blossom algorithm (most memory-intensive)
+    \item Use only efficient algorithms (Static, Balanced, Adaptive Bipartite)
+\end{itemize}
+
+\subsubsection{Slow Execution}
+
+\textbf{Solutions:}
+\begin{itemize}
+    \item Skip Blossom for $N > 500$
+    \item Reduce angular guard search space
+    \item Use Adaptive Bipartite instead of full Bipartite
+    \item Disable detailed visualizations during parameter sweeps
+\end{itemize}
+
+% ==================== SECTION 14: FUTURE ENHANCEMENTS ====================
+\section{Future Enhancements}
+
+\subsection{Potential Improvements}
+
+\subsubsection{Multi-carrier NOMA}
+
+\begin{itemize}
+    \item OFDMA integration with per-subcarrier pairing
+    \item Dynamic subcarrier allocation
+    \item Frequency-selective fading considerations
+\end{itemize}
+
+\subsubsection{Dynamic Scenarios}
+
+\begin{itemize}
+    \item User mobility models (random waypoint, Gauss-Markov)
+    \item Time-varying channel conditions
+    \item Handover management between cells
+    \item Dynamic re-pairing strategies
+\end{itemize}
+
+\subsubsection{Multiple Antenna Systems}
+
+\begin{itemize}
+    \item MIMO-NOMA with spatial multiplexing
+    \item Beamforming integration for interference management
+    \item Hybrid analog-digital precoding
+\end{itemize}
+
+\subsubsection{Machine Learning Integration}
+
+\begin{itemize}
+    \item Graph Neural Network (GNN) based pairing prediction
+    \item Reinforcement learning for dynamic power control
+    \item Deep learning for channel estimation and prediction
+    \item Transfer learning across different scenarios
+\end{itemize}
+
+\subsubsection{Additional Fairness Metrics}
+
+\begin{itemize}
+    \item Max-min fairness optimization
+    \item Alpha-fairness family ($\alpha$-fair utilities)
+    \item Delay-aware scheduling
+    \item Quality of Service (QoS) constraints
+\end{itemize}
+
+% ==================== SECTION 15: CONCLUSION ====================
+\section{Conclusion}
+
+This implementation provides a comprehensive framework for simulating and analyzing NOMA user pairing strategies in 5G wireless communication systems. The code strictly follows 3GPP TR 38.901 standards for realistic channel modeling and implements multiple clustering algorithms ranging from simple heuristics to sophisticated graph-based optimizations.
+
+\subsection{Key Contributions}
+
+The \textbf{Adaptive Bipartite PF Matching} method represents a novel contribution that effectively balances:
+
+\begin{itemize}
+    \item \textbf{Performance:} Near-optimal throughput through power optimization
+    \item \textbf{Efficiency:} Reduced computational complexity via statistical classification
+    \item \textbf{Fairness:} Proportional fairness objective ensures equitable resource allocation
+    \item \textbf{Practicality:} Statistical thresholds automatically adapt to varying channel conditions
+\end{itemize}
+
+\subsection{For Academic Research}
+
+This code serves as a solid foundation for:
+
+\begin{itemize}
+    \item Algorithm comparison studies
+    \item Parameter sensitivity analysis
+    \item Novel pairing strategy development
+    \item Performance benchmarking
+    \item Publication-quality result generation
+\end{itemize}
+
+\subsection{For Practical Deployment}
+
+When considering real-world implementation, account for:
+
+\begin{itemize}
+    \item Real-time complexity constraints
+    \item Signaling overhead for CSI feedback
+    \item Channel State Information (CSI) acquisition delays
+    \item Standardization compatibility (3GPP specifications)
+    \item Hardware limitations and implementation complexity
+\end{itemize}
+
+\subsection{Final Remarks}
+
+The combination of rigorous channel modeling, multiple algorithmic approaches, and comprehensive performance evaluation makes this implementation a valuable tool for both academic research and practical system design in NOMA-based 5G networks.
+
+\vspace{1cm}
+
+\noindent
+\textbf{Document Version:} 1.0 \\
+\textbf{Last Updated:} November 2, 2025 \\
+\textbf{Code Version:} Final (27sept) \\
+\textbf{Author:} NOMA Research Team \\
+\textbf{Repository:} \url{https://github.com/shailendra-iiitm/NOMA}
+
+\end{document}

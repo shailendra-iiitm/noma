@@ -1,0 +1,2 @@
+GNN_Runtime_ms,GNN_Runtime_s,Blossom_Runtime_ms,Blossom_Runtime_s,Speedup_vs_Blossom,Bipartite_Runtime_ms,Bipartite_Runtime_s,Speedup_vs_Bipartite,Static_Runtime_ms,Balanced_Runtime_ms
+846.3113666669718,0.8463113666669718,44749.256799999785,44.749256799999785,52.87564194752079,32927.09489999985,32.92709489999985,38.906596551664705,0.299299999824143,0.1938333334692288

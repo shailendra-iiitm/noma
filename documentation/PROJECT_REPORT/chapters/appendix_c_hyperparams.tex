@@ -1,0 +1,350 @@
+\chapter{Hyperparameter Configurations}
+\label{app:hyperparams}
+
+\section{Complete Model Configuration}
+
+\subsection{GNN Architecture}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+\texttt{in\_channels} & 5 & Input features: $h, x, y, d, \theta$ \\
+\texttt{hidden\_channels} & 128 & Hidden dimension for all layers \\
+\texttt{num\_layers} & 3 & Number of GraphSAGE layers \\
+\texttt{aggr} & \texttt{'mean'} & Aggregation function \\
+\texttt{dropout} & 0.3 & Dropout rate after each layer \\
+\texttt{activation} & \texttt{ReLU} & Non-linear activation \\
+\bottomrule
+\end{tabular}
+\caption{Encoder Hyperparameters}
+\end{table}
+
+\subsection{Decoder Heads}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Head} & \textbf{Architecture} & \textbf{Output} \\
+\midrule
+Pairing Classifier & \makecell[l]{Linear(256, 128) \\ ReLU \\ Dropout(0.3) \\ Linear(128, 1)} & Pairing logit \\
+\midrule
+Sum-Rate Regressor & \makecell[l]{Linear(256, 128) \\ ReLU \\ Dropout(0.3) \\ Linear(128, 1)} & Sum-rate (bps/Hz) \\
+\midrule
+Power Allocator & \makecell[l]{Linear(256, 128) \\ ReLU \\ Dropout(0.3) \\ Linear(128, 2)} & $[P_i, P_j]$ (Watts) \\
+\bottomrule
+\end{tabular}
+\caption{Decoder Head Specifications}
+\end{table}
+
+\section{Training Hyperparameters}
+
+\subsection{Optimization}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+\texttt{optimizer} & Adam & Adaptive moment estimation \\
+\texttt{learning\_rate} & $10^{-3}$ & Initial learning rate \\
+\texttt{weight\_decay} & $10^{-4}$ & L2 regularization coefficient \\
+\texttt{beta1} & 0.9 & Exponential decay rate (1st moment) \\
+\texttt{beta2} & 0.999 & Exponential decay rate (2nd moment) \\
+\texttt{epsilon} & $10^{-8}$ & Numerical stability constant \\
+\texttt{amsgrad} & False & Use AMSGrad variant \\
+\bottomrule
+\end{tabular}
+\caption{Optimizer Configuration}
+\end{table}
+
+\subsection{Learning Rate Scheduling}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+\texttt{scheduler} & ReduceLROnPlateau & Reduce LR on validation plateau \\
+\texttt{mode} & \texttt{'min'} & Monitor validation loss (minimize) \\
+\texttt{factor} & 0.5 & Multiply LR by this on plateau \\
+\texttt{patience} & 10 & Epochs to wait before reduction \\
+\texttt{min\_lr} & $10^{-6}$ & Minimum learning rate \\
+\texttt{threshold} & $10^{-4}$ & Threshold for measuring improvement \\
+\bottomrule
+\end{tabular}
+\caption{Learning Rate Scheduler}
+\end{table}
+
+\subsection{Training Procedure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+\texttt{max\_epochs} & 200 & Maximum training epochs \\
+\texttt{batch\_size} & 32 & Graphs per batch \\
+\texttt{num\_workers} & 4 & Data loader workers \\
+\texttt{gradient\_clip} & 1.0 & Max gradient norm \\
+\texttt{early\_stop\_patience} & 25 & Epochs to wait for improvement \\
+\texttt{early\_stop\_metric} & \texttt{'val\_auc'} & Metric to monitor \\
+\texttt{checkpoint\_metric} & \texttt{'val\_auc'} & Metric for saving best model \\
+\bottomrule
+\end{tabular}
+\caption{Training Loop Configuration}
+\end{table}
+
+\section{Loss Function Weights}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Task} & \textbf{Weight} & \textbf{Justification} \\
+\midrule
+Pairing (BCE) & 1.0 & Primary task; most critical for throughput \\
+Sum-Rate (MAE) & 0.5 & Secondary; helps guide pairing decisions \\
+Power (MAE) & 0.3 & Tertiary; refined via post-processing \\
+\bottomrule
+\end{tabular}
+\caption{Multi-Task Loss Weights}
+\end{table}
+
+\textbf{Total Loss:}
+\begin{equation}
+\mathcal{L} = 1.0 \cdot \mathcal{L}_{pair} + 0.5 \cdot \mathcal{L}_{sumrate} + 0.3 \cdot \mathcal{L}_{power}
+\end{equation}
+
+\section{Data Loading}
+
+\subsection{Dataset Parameters}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+\texttt{num\_scenarios} & 50,000 & Total scenarios generated \\
+\texttt{train\_ratio} & 0.70 & Training split \\
+\texttt{val\_ratio} & 0.15 & Validation split \\
+\texttt{test\_ratio} & 0.15 & Test split \\
+\texttt{num\_negatives} & 10 & Hard negatives per positive pair \\
+\texttt{shuffle} & True & Shuffle training data \\
+\texttt{pin\_memory} & True & Pin memory for faster GPU transfer \\
+\bottomrule
+\end{tabular}
+\caption{Dataset Configuration}
+\end{table}
+
+\subsection{Negative Sampling}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+\texttt{sampling\_strategy} & \texttt{'hard'} & Hard negative mining \\
+\texttt{k\_negatives} & 10 & Negatives per positive \\
+\texttt{negative\_criterion} & Sum-rate & Rank by sum-rate descending \\
+\texttt{sic\_filter} & True & Exclude SIC-violating pairs \\
+\texttt{sic\_threshold} & 8.0 dB & Minimum channel gain difference \\
+\bottomrule
+\end{tabular}
+\caption{Negative Sampling Configuration}
+\end{table}
+
+\section{Inference Parameters}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+\texttt{pairing\_threshold} & 0.5 & Probability threshold for pairing \\
+\texttt{matching\_algorithm} & \texttt{'greedy'} & Greedy matching on scores \\
+\texttt{sic\_verification} & True & Verify SIC constraint \\
+\texttt{sic\_threshold} & 8.0 dB & Same as training \\
+\texttt{batch\_size} & 1 & Single graph inference \\
+\bottomrule
+\end{tabular}
+\caption{Inference Configuration}
+\end{table}
+
+\section{Evaluation Metrics}
+
+\subsection{Classification}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Metric} & \textbf{Library} & \textbf{Parameters} \\
+\midrule
+AUC-ROC & \texttt{sklearn.metrics.roc\_auc\_score} & \texttt{average='macro'} \\
+Precision & \texttt{sklearn.metrics.precision\_score} & \texttt{threshold=0.5} \\
+Recall & \texttt{sklearn.metrics.recall\_score} & \texttt{threshold=0.5} \\
+F1-Score & \texttt{sklearn.metrics.f1\_score} & \texttt{threshold=0.5} \\
+\bottomrule
+\end{tabular}
+\caption{Classification Metrics}
+\end{table}
+
+\subsection{Regression}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Metric} & \textbf{Library} & \textbf{Notes} \\
+\midrule
+MAE & \texttt{torch.nn.functional.l1\_loss} & Primary regression metric \\
+RMSE & Custom & $\sqrt{\text{MSE}}$ \\
+MAPE & Custom & Percentage error \\
+R² & \texttt{sklearn.metrics.r2\_score} & Coefficient of determination \\
+\bottomrule
+\end{tabular}
+\caption{Regression Metrics}
+\end{table}
+
+\section{Hardware Configuration}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Component} & \textbf{Specification} & \textbf{Purpose} \\
+\midrule
+CPU & Intel i7-10700 @ 2.9 GHz & Data loading, preprocessing \\
+RAM & 16 GB DDR4 & Dataset storage in memory \\
+GPU & NVIDIA RTX 3060 (6GB) & Model training and inference \\
+Storage & 1 TB SSD & Fast I/O for checkpoints \\
+\bottomrule
+\end{tabular}
+\caption{Hardware Specifications}
+\end{table}
+
+\section{Software Environment}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Package} & \textbf{Version} \\
+\midrule
+Python & 3.9.13 \\
+PyTorch & 1.13.0 \\
+PyTorch Geometric & 2.2.0 \\
+NumPy & 1.23.5 \\
+Pandas & 1.5.2 \\
+scikit-learn & 1.2.0 \\
+NetworkX & 2.8.8 \\
+Matplotlib & 3.6.2 \\
+tqdm & 4.64.1 \\
+CUDA & 11.7 \\
+cuDNN & 8.5.0 \\
+\bottomrule
+\end{tabular}
+\caption{Software Dependencies}
+\end{table}
+
+\section{Random Seeds}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Component} & \textbf{Seed} & \textbf{Purpose} \\
+\midrule
+NumPy & 42 & Dataset generation reproducibility \\
+PyTorch & 42 & Model initialization, dropout \\
+Python random & 42 & Data splitting \\
+CUDA & 42 & GPU operations determinism \\
+\bottomrule
+\end{tabular}
+\caption{Random Seed Configuration}
+\end{table}
+
+\textbf{Note:} Full determinism ensured via:
+\begin{verbatim}
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+\end{verbatim}
+
+\section{Model Checkpointing}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\midrule
+\texttt{save\_dir} & \texttt{checkpoints/} & Directory for saved models \\
+\texttt{save\_frequency} & Every epoch & Save checkpoint frequency \\
+\texttt{keep\_best\_only} & True & Only keep best model \\
+\texttt{best\_metric} & \texttt{val\_auc} & Metric for "best" \\
+\texttt{checkpoint\_format} & \texttt{.pt} & PyTorch native format \\
+\texttt{save\_optimizer} & True & Save optimizer state \\
+\bottomrule
+\end{tabular}
+\caption{Checkpointing Configuration}
+\end{table}
+
+\section{Hyperparameter Tuning}
+
+\subsection{Grid Search}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Hyperparameter} & \textbf{Search Space} \\
+\midrule
+Learning rate & $\{10^{-4}, 10^{-3}, 10^{-2}\}$ \\
+Hidden dimension & $\{64, 128, 256\}$ \\
+Number of layers & $\{2, 3, 4\}$ \\
+Dropout & $\{0.1, 0.3, 0.5\}$ \\
+Batch size & $\{16, 32, 64\}$ \\
+\bottomrule
+\end{tabular}
+\caption{Hyperparameter Search Space}
+\end{table}
+
+\subsection{Best Configuration (Selected)}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llr}
+\toprule
+\textbf{Hyperparameter} & \textbf{Value} & \textbf{Val AUC} \\
+\midrule
+Learning rate & $10^{-3}$ & \textbf{0.928} \\
+Hidden dimension & 128 & (best) \\
+Number of layers & 3 & \\
+Dropout & 0.3 & \\
+Batch size & 32 & \\
+\bottomrule
+\end{tabular}
+\caption{Optimal Hyperparameters}
+\end{table}
+
+\section{Summary}
+
+The selected hyperparameters balance:
+\begin{itemize}
+    \item \textbf{Performance:} 96.5\% of optimal throughput on 500-user scenario
+    \item \textbf{Efficiency:} 846 ms inference time for N=500 users
+    \item \textbf{Scalability:} 128K parameters (deployable on edge devices)
+    \item \textbf{Training:} Converges in ~120 epochs on 200 training scenarios
+\end{itemize}
+
+All configurations are stored in \texttt{config.py} for reproducibility.

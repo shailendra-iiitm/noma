@@ -1,0 +1,191 @@
+\chapter{Introduction}
+\label{chap:introduction}
+
+\section{Background and Motivation}
+
+The telecommunications industry is witnessing an unprecedented explosion in connected devices, with projections indicating over 50 billion Internet of Things (IoT) devices and mobile users by 2030. This massive connectivity, coupled with the emergence of bandwidth-intensive applications such as ultra-high-definition video streaming, augmented reality, autonomous vehicles, and industrial automation, places enormous pressure on wireless network infrastructure. Fifth Generation (5G) networks and the upcoming Sixth Generation (6G) systems must address these challenges while ensuring spectral efficiency, energy efficiency, low latency, and fairness across heterogeneous user populations.
+
+Traditional Orthogonal Multiple Access (OMA) schemes—including Frequency Division Multiple Access (FDMA), Time Division Multiple Access (TDMA), Code Division Multiple Access (CDMA), and Orthogonal Frequency Division Multiple Access (OFDMA)—allocate exclusive time-frequency resources to each user. While this orthogonal allocation eliminates intra-cell interference, it fundamentally limits spectral efficiency as the number of users grows. Cell-edge users, experiencing poor channel conditions, consume disproportionate resources to meet minimum Quality of Service (QoS) requirements, further constraining system capacity.
+
+\subsection{Non-Orthogonal Multiple Access (NOMA)}
+
+Power-Domain Non-Orthogonal Multiple Access (PD-NOMA) has emerged as a transformative technology to overcome these limitations. Unlike OMA, PD-NOMA allows multiple users to share identical time-frequency resources by exploiting the power domain. The fundamental principle involves:
+
+\begin{enumerate}
+    \item \textbf{Asymmetric Power Allocation:} Users with weaker channel conditions (cell-edge users) receive higher transmit power, while users with stronger channels (cell-center users) are allocated lower power.
+    
+    \item \textbf{Superposition Coding:} The base station transmits a superposed signal containing information for multiple users simultaneously.
+    
+    \item \textbf{Successive Interference Cancellation (SIC):} Stronger users decode and remove signals intended for weaker users before decoding their own, thereby canceling interference.
+\end{enumerate}
+
+This approach achieves significant spectral efficiency gains (typically 30-50\% improvement over OFDMA) and enhances fairness by prioritizing cell-edge users. NOMA has been standardized in 3GPP Release 15 and beyond, positioning it as a key enabler for 5G-Advanced and 6G networks.
+
+\subsection{The User Pairing Challenge}
+
+While NOMA's theoretical benefits are well-established, practical deployment faces a critical optimization problem: \textbf{user pairing} or \textbf{clustering}. Given N users in a cell, the base station must decide which users should share each Physical Resource Block (PRB). This decision directly impacts:
+
+\begin{itemize}
+    \item \textbf{System Throughput:} Suboptimal pairings increase inter-user interference, reducing achievable data rates.
+    \item \textbf{SIC Feasibility:} Successful interference cancellation requires sufficient channel gain disparity between paired users (typically $\geq$ 8 dB).
+    \item \textbf{Fairness:} Poor pairing can starve weak users or waste resources on strong users.
+    \item \textbf{Computational Complexity:} The number of possible pairings grows exponentially (O(N!) for permutations), making exhaustive search impractical.
+\end{itemize}
+
+Traditional approaches include:
+\begin{itemize}
+    \item \textbf{Heuristic Methods:} Simple rules (strongest-with-weakest) that are computationally efficient but suboptimal.
+    \item \textbf{Optimization-Based Methods:} Graph matching algorithms (Blossom, Hungarian) that achieve near-optimal performance but with O(N³) complexity.
+    \item \textbf{Reinforcement Learning:} Online learning approaches that adapt to channel dynamics but require extensive training.
+\end{itemize}
+
+For large-scale deployments (N > 100 users), optimization methods become computationally prohibitive for real-time scheduling (1 ms Transmission Time Interval in 5G NR), while heuristics sacrifice significant performance.
+
+\subsection{Deep Learning for Wireless Optimization}
+
+Recent advances in deep learning, particularly Graph Neural Networks (GNNs), offer a promising alternative. GNNs can:
+\begin{enumerate}
+    \item \textbf{Learn from Data:} Extract optimal pairing patterns from historical channel measurements without hand-crafted rules.
+    \item \textbf{Generalize:} Transfer learned policies to unseen scenarios and user distributions.
+    \item \textbf{Operate in Real-Time:} Achieve O(N log N) or better inference complexity after offline training.
+    \item \textbf{Handle Constraints:} Incorporate physical constraints (SIC, power budgets) naturally through architecture design.
+\end{enumerate}
+
+GraphSAGE (SAmple and aggreGatE), introduced by Hamilton et al. in 2017, enables inductive learning on graphs—predicting properties of unseen nodes and edges. This capability is ideal for wireless networks where topology varies dynamically.
+
+\section{Problem Statement}
+
+\textbf{Given:}
+\begin{itemize}
+    \item N users with Channel State Information (CSI) including path loss, shadowing, and fading
+    \item Total transmit power P
+    \item SIC threshold $\gamma_{th}$ (typically 8 dB)
+    \item Physical constraints (angular separation, power budget)
+\end{itemize}
+
+\textbf{Find:}
+\begin{itemize}
+    \item Optimal user pairings that maximize system sum-rate
+    \item Power allocation coefficients $\alpha_{ij} \in (0,1)$ for each pair (i,j)
+    \item Subject to SIC feasibility and fairness constraints
+\end{itemize}
+
+\textbf{Requirements:}
+\begin{itemize}
+    \item Achieve near-optimal throughput (>95\% of Blossom matching)
+    \item Real-time inference (<10 ms for N=12 users)
+    \item Robust generalization to unseen scenarios
+    \item Lightweight deployment (suitable for edge base stations)
+\end{itemize}
+
+\section{Objectives}
+
+The primary objectives of this project are:
+
+\begin{enumerate}
+    \item \textbf{Realistic Channel Modeling:} Implement 3GPP TR 38.901 Urban Macro (UMa) channel model incorporating path loss, log-normal shadowing, and Rayleigh fading to generate high-fidelity CSI datasets.
+    
+    \item \textbf{Baseline Implementation:} Develop and benchmark four traditional user clustering strategies:
+    \begin{itemize}
+        \item Static Pairing (strongest-with-weakest)
+        \item Balanced Pairing (upper-half with lower-half)
+        \item Blossom Maximum-Weight Matching (Edmonds' algorithm)
+        \item Bipartite Graph Matching with Proportional Fairness
+    \end{itemize}
+    
+    \item \textbf{Deep Learning Framework:} Design and implement NOMA-GNN, a GraphSAGE-based architecture that:
+    \begin{itemize}
+        \item Treats users as graph nodes and potential pairings as edges
+        \item Employs multi-task learning for joint pairing classification, sum-rate regression, and power allocation prediction
+        \item Enforces SIC and angular separation constraints during graph construction
+        \item Achieves O(N log N) inference complexity via greedy matching
+    \end{itemize}
+    
+    \item \textbf{Comprehensive Evaluation:} Compare traditional and learning-based methods across multiple metrics:
+    \begin{itemize}
+        \item System throughput and sum-rate
+        \item Fairness (Jain's index, minimum user rate)
+        \item Computational complexity and runtime
+        \item Generalization to unseen scenarios
+        \item Classification and regression accuracy
+    \end{itemize}
+    
+    \item \textbf{Practical Deployment:} Analyze deployment feasibility including:
+    \begin{itemize}
+        \item Model size and memory footprint
+        \item Inference latency for real-time scheduling
+        \item Robustness to channel variations
+        \item Integration with existing 5G infrastructure
+    \end{itemize}
+\end{enumerate}
+
+\section{Scope and Limitations}
+
+\subsection{Scope}
+This project focuses on:
+\begin{itemize}
+    \item Downlink PD-NOMA in single-cell Urban Macro scenarios
+    \item Two-user pairing (cluster size = 2)
+    \item Perfect CSI at the base station
+    \item Static channel model (quasi-static fading)
+    \item Simulation-based evaluation with synthetic datasets
+\end{itemize}
+
+\subsection{Limitations}
+The following aspects are beyond the current scope:
+\begin{itemize}
+    \item Multi-cell coordination and inter-cell interference
+    \item Larger cluster sizes (>2 users per PRB)
+    \item Imperfect CSI and channel estimation errors
+    \item Dynamic channel prediction and mobility modeling
+    \item Uplink NOMA and full-duplex scenarios
+    \item Hardware implementation and over-the-air testing
+\end{itemize}
+
+\section{Contributions}
+
+The main contributions of this project are:
+
+\begin{enumerate}
+    \item \textbf{Comprehensive Benchmark:} First systematic comparison of traditional graph-based methods using standardized 3GPP UMa channel model with realistic path loss, shadowing, and fading statistics.
+    
+    \item \textbf{Novel GNN Architecture:} NOMA-GNN framework featuring:
+    \begin{itemize}
+        \item Graph-based user pairing learned from optimal Blossom solutions
+        \item Physical constraint enforcement at graph construction stage
+        \item Lightweight architecture (128K parameters) suitable for edge deployment
+        \item O(N log N) complexity for scalable real-time operation
+    \end{itemize}
+    
+    \item \textbf{Superior Performance:} Demonstrated 96.5\% of optimal throughput with 52.9× speedup, establishing practical viability for deployment in dense networks with 500+ users per cell.
+    
+    \item \textbf{Open Implementation:} Complete codebase with data preprocessing, model training, inference pipeline, and evaluation tools for reproducibility and future research.
+\end{enumerate}
+
+\section{Report Organization}
+
+The remainder of this report is structured as follows:
+
+\begin{description}
+    \item[Chapter 2:] Reviews related work in NOMA optimization, graph matching algorithms, and deep learning for wireless networks.
+    
+    \item[Chapter 3:] Formulates the joint user pairing and power allocation problem mathematically.
+    
+    \item[Chapter 4:] Describes the system model including base station configuration, user distribution, and NOMA signal model.
+    
+    \item[Chapter 5:] Details the 3GPP TR 38.901 UMa channel model implementation for realistic CSI generation.
+    
+    \item[Chapter 6:] Presents traditional clustering methodologies with complexity analysis.
+    
+    \item[Chapter 7:] Introduces the NOMA-GNN framework including architecture, training, and inference.
+    
+    \item[Chapter 8:] Discusses implementation details, software architecture, and development tools.
+    
+    \item[Chapter 9:] Specifies experimental setup, datasets, hyperparameters, and evaluation metrics.
+    
+    \item[Chapter 10:] Presents results including performance comparison, ablation studies, and deployment analysis.
+    
+    \item[Chapter 11:] Concludes with summary, practical implications, and future research directions.
+\end{description}
+
+Appendices provide source code listings, dataset specifications, and hyperparameter configurations for complete reproducibility.

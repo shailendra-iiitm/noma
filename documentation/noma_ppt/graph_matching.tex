@@ -1,0 +1,44 @@
+\section{Graph Matching Framework for User Pairing in PD\mbox{-}NOMA}
+\label{sec:graph-matching}
+
+In power-domain non-orthogonal multiple access (PD\mbox{-}NOMA), users are multiplexed in the power domain to improve spectral efficiency by sharing the same time–frequency resources. A key design lever is \emph{user clustering} (pairing users on a PRB), which drives achievable sum rate, fairness, and the feasibility of successive interference cancellation (SIC). Heuristic clusterers (e.g., static strong–weak or balanced pairing) often ignore \emph{global} optimality. Casting pairing as a \emph{graph matching} problem enables optimal or near-optimal pair selection under weighted utilities (e.g., achievable sum rate).
+
+Let $G=(V,E)$ be an undirected graph where vertices are users and an edge $(i,j)\!\in\!E$ denotes a feasible NOMA pair. A \emph{matching} $M\!\subseteq\!E$ has no two edges sharing a vertex. A matching is \emph{maximal} if it cannot be extended, \emph{maximum} if it has the largest cardinality, and \emph{perfect} if all vertices are matched (only possible for even $|V|$). In PD\mbox{-}NOMA, a matching specifies which users are co-scheduled on the same PRB.
+
+
+Not all pairs are equally valuable. Assign a weight $w_{ij}$ to each feasible edge $(i,j)$ capturing utility (e.g., sum rate). The \emph{maximum weight matching} (MWM) is
+\begin{equation}
+\label{eq:mwm}
+M^\star \in \arg\max_{M \subseteq E} \ \sum_{(i,j)\in M} w_{ij}
+\quad\text{s.t. $M$ is a matching.}
+\end{equation}
+For PD\mbox{-}NOMA sum-rate maximization with power split $\alpha\!\in\!(0,1)$ (more power to the weaker user), a common choice is
+\begin{equation}
+\label{eq:wij}
+w_{ij} \;=\; \max_{\alpha\in(0,1)} 
+\Big[\log_2\!\big(1+\mathrm{SINR}_i(\alpha)\big) + \log_2\!\big(1+\mathrm{SINR}_j(\alpha)\big)\Big],
+\end{equation}
+subject to SIC-feasibility for the strong user decoding the weak user (see Sec.~\ref{sec:sinr}). This converts pairing into a combinatorial optimization aligned with system throughput.
+
+\section*{Blossom (General-Graph) Matching}
+When any two users may pair, $G$ is a general (non-bipartite) graph. The maximum-weight matching can be solved via Edmonds’ Blossom framework in polynomial time; practical NOMA uses adopt Blossom when seeking global optimality under general feasibility filters \cite{kose2021}. Complexity is $\mathcal{O}(|V|^3)$, which can be heavy for very large user sets, but pre-pruning by channel-gain gap and minimum SIC margin keeps graphs sparse in practice.
+
+\section*{Bipartite Matching and Hungarian Assignment}
+A PD\mbox{-}NOMA-consistent simplification partitions users by channel strength: $U=U_S\cup U_W$ (strong vs. weak, disjoint), and only strong–weak edges are allowed. This yields a bipartite graph with objective
+\begin{equation}
+\label{eq:bipartite}
+M^\star \in \arg\max_{M \subseteq U_S\times U_W} \ \sum_{(i,j)\in M} w_{ij}.
+\end{equation}
+The maximum-weight bipartite matching can be solved efficiently (e.g., Hungarian / min-cost max-flow). In PD\mbox{-}NOMA IoT scheduling, this structure is both physically meaningful (promotes channel disparity for SIC) and computationally friendly \cite{mishra2022vtc,mishra2023globecom}.
+
+\section*{Blossom vs.\ Bipartite}
+\begin{itemize}
+  \item \textbf{Blossom (general graph):} Highest modeling flexibility; best for scenarios where non–strong–weak pairs might still be beneficial under constraints; typically highest sum-rate but higher runtime.
+  \item \textbf{Bipartite (strong–weak):} Encodes NOMA prior (disparity), avoids strong–strong or weak–weak pairs, and is faster; often near-Blossom throughput with simpler implementation.
+\end{itemize}
+
+\vspace{0.5cm}
+{\bf{Bipartite matching offers a clean, scalable basis for user clustering that aligns with SIC physics and maximizes spectral efficiency via \eqref{eq:wij}. It also provides a natural template for learning-based accelerations (e.g., using GNNs to predict $w_{ij}$ or feasibility), enabling real-time pairing under dynamic channels.}}
+
+
+We framed PD\mbox{-}NOMA user pairing as maximum-weight matching, discussed Blossom for general graphs and Hungarian-style assignment for bipartite strong–weak pairing, and argued why the bipartite formulation fits PD\mbox{-}NOMA’s physical constraints and runtime needs. This framework underpins the comparative results and learning-based extensions presented later.
