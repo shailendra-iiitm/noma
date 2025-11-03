@@ -1,0 +1,14 @@
+============================================================
+JAIN'S FAIRNESS INDEX ANALYSIS
+============================================================
+
+Jain's Fairness Index: 0.9851
+
+Rate Statistics:
+  Mean:   7.80 bits/s/Hz
+  Median: 7.71 bits/s/Hz
+  Std:    0.96
+  Min:    4.99
+  Max:    11.08
+  10th percentile: 6.61
+  90th percentile: 9.10

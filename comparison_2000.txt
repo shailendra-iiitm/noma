@@ -1,0 +1,137 @@
+
+(.venv) C:\Users\shail\Desktop\NOMA_FINAL\noma_gnn_backup>python run.py compare --file C:\Users\shail\Desktop\NOMA_FINAL\h_values_a.csv
+
+📊 Running comparison...
+
+⚡ Running FAST comparison (skipping Blossom)
+📊 Dataset: C:\Users\shail\Desktop\NOMA_FINAL\h_values_a.csv
+💾 Output: C:\Users\shail\Desktop\NOMA_FINAL\noma_gnn_backup\comparison\comparison_results.csv
+🔄 Iterations: 1
+
+==========================================================================================
+ NOMA PAIRING METHODS - COMPREHENSIVE COMPARISON
+==========================================================================================
+
+[1/6] Loading scenario data...
+  ⚠ Warning: No is_los column found, assuming all NLOS
+  ✓ Loaded 2000 users
+
+[2/6] Loading GNN model...
+  ✓ GNN model loaded
+
+[3/6] Running STATIC pairing...
+  ✓ Time: 0.5871 ± 0.0000 ms
+  ✓ NOMA Pairs: 470, OMA Users: 1060
+  ✓ Throughput: 1389.04 Mbps (180 kHz × 470 pairs)
+
+[4/6] Running BALANCED pairing...
+  ✓ Time: 1.1093 ± 0.0000 ms
+  ✓ NOMA Pairs: 632, OMA Users: 736
+  ✓ Throughput: 1784.72 Mbps (180 kHz × 632 pairs)
+
+[5/6] Running BIPARTITE pairing...
+  Note: O(N³) complexity - may take time for N=2000
+  Iteration 1/1... 1839535.69 ms
+  ✓ Mean Time: 1839535.69 ± 0.00 ms
+  ✓ NOMA Pairs: 935, OMA Users: 130
+  ✓ Throughput: 2644.88 Mbps (180 kHz × 935 pairs)
+
+[6/6] BLOSSOM pairing SKIPPED (use --run-blossom to enable)
+
+[7/7] Running NOMA-GNN pairing...
+  Iteration 1/1... 16082.78 ms
+  ✓ Mean Time: 16082.78 ± 0.00 ms
+  ✓ NOMA Pairs: 905, OMA Users: 190
+  ✓ Throughput: 2553.10 Mbps (180 kHz × 905 pairs)
+
+==========================================================================================
+ COMPARISON SUMMARY
+==========================================================================================
+
+   Method      Time_ms  Time_std_ms  NOMA_Pairs  OMA_Users  Users_Served  Pairing_Efficiency_%  Throughput_Mbps  Avg_Sum_Rate_bps_Hz  Per_Pair_BW_kHz
+   Static       0.5871          0.0         470       1060          2000                  47.0      1389.039712            16.418909            180.0
+ Balanced       1.1093          0.0         632        736          2000                  63.2      1784.721593            15.688481            180.0
+Bipartite 1839535.6922          0.0         935        130          2000                  93.5      2644.884458            15.715297            180.0
+ NOMA-GNN   16082.7761          0.0         905        190          2000                  90.5      2553.103280            15.672826            180.0
+
+✓ Results saved to: C:\Users\shail\Desktop\NOMA_FINAL\noma_gnn_backup\comparison\comparison_results.csv
+
+==========================================================================================
+ AUTO-DISPLAYING RESULTS
+==========================================================================================
+
+📊 Analyzing: comparison_results.csv
+
+==========================================================================================
+ COMPREHENSIVE COMPARISON RESULTS (500 Users)
+==========================================================================================
+
+   Method      Time_ms  Time_std_ms  NOMA_Pairs  OMA_Users  Users_Served  Pairing_Efficiency_%  Throughput_Mbps  Avg_Sum_Rate_bps_Hz  Per_Pair_BW_kHz
+   Static       0.5871          0.0         470       1060          2000                  47.0      1389.039712            16.418909            180.0
+ Balanced       1.1093          0.0         632        736          2000                  63.2      1784.721593            15.688481            180.0
+Bipartite 1839535.6922          0.0         935        130          2000                  93.5      2644.884458            15.715297            180.0
+ NOMA-GNN   16082.7761          0.0         905        190          2000                  90.5      2553.103280            15.672826            180.0
+
+==========================================================================================
+ KEY INSIGHTS FOR RESEARCH PAPER
+==========================================================================================
+
+1. TIMING COMPARISON:
+   Note: Static, Balanced, Bipartite, GNN = average of 3 runs
+         Blossom = single run (too slow for multiple iterations)
+   - Static       0.5871 ms
+   - Balanced     1.11 ms
+   - Bipartite    1839535.69 ms (1839.54 s)
+   - NOMA-GNN     16082.78 ms (16.08 s)
+
+2. SPEEDUP ANALYSIS:
+   - GNN is 114.4× FASTER than Bipartite
+   - Blossom not run (use --full to include)
+
+3. THROUGHPUT COMPARISON:
+   - Static       1389.04 Mbps (+0.0%)
+   - Balanced     1784.72 Mbps (+28.5%)
+   - Bipartite    2644.88 Mbps (+90.4%)
+   - NOMA-GNN     2553.10 Mbps (+83.8%)
+
+4. GNN PERFORMANCE vs OPTIMAL:
+   - Throughput: 96.53% of Bipartite
+   - Throughput gap: 91.78 Mbps
+   - Note: Run with --full to compare against Blossom optimal
+
+5. PAIRING EFFICIENCY:
+   - Static       470 NOMA pairs, 1060 OMA users (47.0% paired)
+   - Balanced     632 NOMA pairs, 736 OMA users (63.2% paired)
+   - Bipartite    935 NOMA pairs, 130 OMA users (93.5% paired)
+   - NOMA-GNN     905 NOMA pairs, 190 OMA users (90.5% paired)
+
+6. SPECTRAL EFFICIENCY (Avg Sum Rate):
+   - Static       16.42 bits/s/Hz (BEST)
+   - Balanced     15.69 bits/s/Hz
+   - Bipartite    15.72 bits/s/Hz
+   - NOMA-GNN     15.67 bits/s/Hz
+
+7. BANDWIDTH ALLOCATION:
+   Fixed: 180 kHz per NOMA pair (OMA users excluded)
+   - Static       470 pairs × 180 kHz = 84.6 MHz total
+   - Balanced     632 pairs × 180 kHz = 113.8 MHz total
+   - Bipartite    935 pairs × 180 kHz = 168.3 MHz total
+   - NOMA-GNN     905 pairs × 180 kHz = 162.9 MHz total
+
+==========================================================================================
+ RECOMMENDED TEXT FOR PAPER
+==========================================================================================
+
+The proposed NOMA-GNN achieves:
+- 114.4× speedup over bipartite matching
+- 96.5% of Bipartite throughput
+- 15.67 bits/s/Hz average spectral efficiency
+
+For N≈2000 users, GNN completes in 16082.78 ms compared to
+1839.54s for Bipartite.
+
+Note: Run with --full to include Blossom optimal baseline.
+
+==========================================================================================
+
+(.venv) C:\Users\shail\Desktop\NOMA_FINAL\noma_gnn_backup>

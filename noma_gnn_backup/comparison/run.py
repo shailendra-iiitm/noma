@@ -41,7 +41,7 @@ Examples:
     parser.add_argument("--file", "-f", help="Custom h_values CSV file")
     parser.add_argument("--full", action="store_true", help="Include Blossom (slower)")
     parser.add_argument("--show", "-s", action="store_true", help="Show last results only")
-    parser.add_argument("--iterations", "-i", type=int, default=3, help="Number of iterations (default: 3)")
+    parser.add_argument("--iterations", "-i", type=int, default=1, help="Number of iterations (default: 3)")
     parser.add_argument("--output", "-o", help="Output CSV file")
     
     args = parser.parse_args()

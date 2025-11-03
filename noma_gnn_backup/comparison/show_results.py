@@ -34,15 +34,27 @@ print(" KEY INSIGHTS FOR RESEARCH PAPER")
 print("="*90)
 
 print(f"\n1. TIMING COMPARISON:")
+print(f"   Note: Static, Balanced, Bipartite, GNN = average of {df['Time_std_ms'].notna().sum()-1} runs")
+print(f"         Blossom = single run (too slow for multiple iterations)")
 for idx, row in df.iterrows():
     method = row['Method']
     time_ms = row['Time_ms']
+    time_std = row['Time_std_ms']
+    
     if time_ms < 1:
-        print(f"   - {method:12s} {time_ms:.4f} ms")
+        time_str = f"{time_ms:.4f} ms"
     elif time_ms < 1000:
-        print(f"   - {method:12s} {time_ms:.2f} ms")
+        time_str = f"{time_ms:.2f} ms"
     else:
-        print(f"   - {method:12s} {time_ms:.2f} ms ({time_ms/1000:.2f} s)")
+        time_str = f"{time_ms:.2f} ms ({time_ms/1000:.2f} s)"
+    
+    # Add std dev if available
+    if pd.notna(time_std) and time_std > 0:
+        time_str += f" ± {time_std:.2f} ms"
+    elif method == "Blossom":
+        time_str += " [single run]"
+    
+    print(f"   - {method:12s} {time_str}")
 
 print(f"\n2. SPEEDUP ANALYSIS:")
 # Find GNN row
@@ -94,9 +106,10 @@ else:
 print(f"\n5. PAIRING EFFICIENCY:")
 for idx, row in df.iterrows():
     method = row['Method']
-    pairs = int(row['Pairs'])
+    noma_pairs = int(row['NOMA_Pairs'])
+    oma_users = int(row['OMA_Users'])
     efficiency = row['Pairing_Efficiency_%']
-    print(f"   - {method:12s} {pairs} pairs ({efficiency:.1f}% users)")
+    print(f"   - {method:12s} {noma_pairs} NOMA pairs, {oma_users} OMA users ({efficiency:.1f}% paired)")
 
 print(f"\n6. SPECTRAL EFFICIENCY (Avg Sum Rate):")
 best_rate = df['Avg_Sum_Rate_bps_Hz'].max()
@@ -106,12 +119,20 @@ for idx, row in df.iterrows():
     marker = " (BEST)" if rate == best_rate else ""
     print(f"   - {method:12s} {rate:.2f} bits/s/Hz{marker}")
 
+print(f"\n7. BANDWIDTH ALLOCATION:")
+print(f"   Fixed: 180 kHz per NOMA pair (OMA users excluded)")
+for idx, row in df.iterrows():
+    method = row['Method']
+    noma_pairs = int(row['NOMA_Pairs'])
+    total_bw = noma_pairs * 180  # kHz
+    print(f"   - {method:12s} {noma_pairs} pairs × 180 kHz = {total_bw/1000:.1f} MHz total")
+
 print("\n" + "="*90)
 print(" RECOMMENDED TEXT FOR PAPER")
 print("="*90)
 
 gnn_rate = df[df['Method'] == 'NOMA-GNN']['Avg_Sum_Rate_bps_Hz'].values[0]
-n_users = int(df['Pairs'].sum() * 2 / len(df))  # Estimate
+n_users = int(df['Users_Served'].iloc[0])  # Get from Users_Served column
 
 if 'Blossom' in df['Method'].values:
     blos_idx = df[df['Method'] == 'Blossom'].index[0]

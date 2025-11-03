@@ -4,18 +4,27 @@ NOMA Pairing Methods - Comprehensive Comparison Tool
 This tool compares 5 pairing methods on the SAME dataset:
 1. Static (Strongest-Weakest)
 2. Balanced (Upper-Lower Half)
-3. Bipartite (Graph-based PF matching)
+3. Bipartite (Graph-based matching with angular guard)
 4. Blossom (General max-weight matching)
 5. NOMA-GNN (Proposed)
 
+Comparison Methodology:
+- Fixed bandwidth: 180 kHz per NOMA pair
+- Only NOMA pairs contribute to throughput (OMA users excluded)
+- Focus on pairing quality rather than coverage
+- All graph-based methods use sum rate (R1 + R2) optimization
+
 Metrics Compared:
 - Execution Time (ms)
-- Number of Pairs
-- Total Throughput (Mbps)
-- Average Sum Rate (bits/s/Hz)
+- NOMA Pairs / OMA Users
+- Total Throughput (Mbps) = num_pairs × avg_sum_rate × 180kHz
+- Average Sum Rate per Pair (bits/s/Hz)
 - Pairing Efficiency (% users paired)
 
-EXACT implementations copied from noma.py (codes/27sept/noma.py)
+Implementations based on noma.py (codes/27sept/noma.py)
+FIXED: November 3, 2025 - Corrected power allocation
+FIXED: November 3, 2025 - Unified weight function (sum rate)
+FIXED: November 3, 2025 - Fixed bandwidth (180 kHz) for clean comparison
 
 Author: Shailendra
 Date: October 2025
@@ -75,8 +84,8 @@ def angle_diff_rad(theta1: float, theta2: float) -> float:
 
 def calc_pair_rate(h1: float, h2: float) -> Tuple[float, float, float, float, float]:
     """
-    Calculate NOMA rates and optimal power allocation.
-    EXACT implementation from noma.py.
+    Calculate NOMA rates with channel-gain-based power allocation.
+    CORRECTED to match noma.py implementation exactly.
     
     Args:
         h1: weaker channel gain (linear)
@@ -85,9 +94,10 @@ def calc_pair_rate(h1: float, h2: float) -> Tuple[float, float, float, float, fl
     Returns:
         P1, P2, R1, R2, R_sum (all in linear/bits/s/Hz)
     """
-    # Baseline split (50-50)
-    P1 = TOTAL_POWER / 2
-    P2 = TOTAL_POWER / 2
+    # NOMA power allocation (inversely proportional to channel gain)
+    # Weak user (h1) gets MORE power, strong user (h2) gets LESS power
+    P1 = TOTAL_POWER * h2 / (h1 + h2)
+    P2 = TOTAL_POWER * h1 / (h1 + h2)
     
     # SINR calculations
     SINR1 = (P1 * h1) / (P2 * h1 + NOISE_POWER)
@@ -101,19 +111,32 @@ def calc_pair_rate(h1: float, h2: float) -> Tuple[float, float, float, float, fl
     return P1, P2, R1, R2, R_sum
 
 
-def calculate_throughput_mbps(pairs: List[Tuple[int, int]], h_linear: np.ndarray) -> float:
+def calculate_throughput_mbps(pairs: List[Tuple[int, int]], 
+                              h_linear: np.ndarray,
+                              n_users: int) -> Tuple[float, int, int, float]:
     """
-    Calculate total throughput in Mbps for given pairs.
+    Calculate total throughput in Mbps with FIXED bandwidth per NOMA pair.
+    
+    Comparison methodology:
+    - Only NOMA pairs are considered (OMA users ignored)
+    - Each NOMA pair gets fixed 180 kHz bandwidth
+    - Focus is on pairing quality, not coverage
     
     Args:
         pairs: List of (user1_idx, user2_idx) tuples
         h_linear: Channel gains (linear scale)
+        n_users: Total number of users in scenario
     
     Returns:
-        Total throughput in Mbps
+        Tuple of (throughput_mbps, num_noma_pairs, num_oma_users, total_spectral_efficiency)
     """
-    total_rate = 0.0
+    FIXED_BW_PER_PAIR = 180e3  # 180 kHz per NOMA pair
     
+    total_rate = 0.0  # Spectral efficiency (bits/s/Hz)
+    num_valid_pairs = 0
+    paired = set()
+    
+    # Process NOMA pairs only
     for u1, u2 in pairs:
         h1, h2 = h_linear[u1], h_linear[u2]
         
@@ -128,11 +151,21 @@ def calculate_throughput_mbps(pairs: List[Tuple[int, int]], h_linear: np.ndarray
         # Calculate rates
         _, _, R1, R2, _ = calc_pair_rate(h1, h2)
         total_rate += R1 + R2
+        paired.add(u1)
+        paired.add(u2)
+        num_valid_pairs += 1
     
-    # Convert to Mbps: rate (bits/s/Hz) × bandwidth (Hz) / 1e6
-    throughput_mbps = (total_rate * B_TOTAL) / 1e6
+    # OMA users (unpaired) - count but don't include in throughput
+    num_oma = n_users - len(paired)
     
-    return throughput_mbps
+    # Fixed bandwidth per pair
+    if num_valid_pairs == 0:
+        return 0.0, 0, num_oma, 0.0
+    
+    # Throughput = spectral_efficiency × bandwidth_per_pair × num_pairs
+    throughput_mbps = (total_rate * FIXED_BW_PER_PAIR) / 1e6
+    
+    return throughput_mbps, num_valid_pairs, num_oma, total_rate
 
 
 # ==========================================================================================
@@ -178,18 +211,22 @@ def balanced_pairing(h_linear: np.ndarray) -> List[Tuple[int, int]]:
 # ==========================================================================================
 def bipartite_pairing(h_linear: np.ndarray, angles: np.ndarray) -> List[Tuple[int, int]]:
     """
-    Bipartite PF matching with angular guard.
-    EXACT implementation from noma.py (build_bipartite_pf_matching).
+    Bipartite matching with angular guard.
+    Modified from noma.py to use SUM RATE (same as Blossom) for fair comparison.
     
     Steps:
     1. Split users: weak (lower half) and strong (upper half) by channel gain
     2. Build bipartite graph (weak ↔ strong) with edges satisfying:
        - Angular guard (>= 25°)
        - SIC constraint (>= 8 dB difference)
-    3. Edge weight = log(R1) + log(R2) (proportional fairness)
+    3. Edge weight = R1 + R2 (sum rate - SAME as Blossom for fair comparison)
     4. Run NetworkX max_weight_matching
     
     Complexity: O(N³)
+    
+    Note: Uses sum rate instead of PF (log-based) weights to ensure:
+          - Fair timing comparison with Blossom
+          - Same optimization objective (maximize total throughput)
     """
     n = len(h_linear)
     sorted_indices = np.argsort(h_linear)  # Ascending
@@ -212,12 +249,9 @@ def bipartite_pairing(h_linear: np.ndarray, angles: np.ndarray) -> List[Tuple[in
             if not sic_satisfied(h1, h2):
                 continue
             
-            # PF weight
-            _, _, R1, R2, _ = calc_pair_rate(h1, h2)
-            w = np.log(R1 + PF_EPS) + np.log(R2 + PF_EPS)
-            
-            if np.isfinite(w):
-                G.add_edge(i, j, weight=w)
+            # Sum rate weight (SAME as Blossom)
+            _, _, R1, R2, R_sum = calc_pair_rate(h1, h2)
+            G.add_edge(i, j, weight=R_sum)
     
     # Maximum weight matching
     matching = nx.max_weight_matching(G, maxcardinality=True)
@@ -360,7 +394,7 @@ def run_comparison(h_values_file: str,
                    scaler_file: str,
                    device: str = 'cpu',
                    skip_blossom: bool = False,
-                   iterations: int = 3,
+                   iterations: int = 1,
                    output_file: str = 'comparison_results.csv') -> pd.DataFrame:
     """
     Run comprehensive comparison of all 5 methods.
@@ -455,20 +489,23 @@ def run_comparison(h_values_file: str,
         elapsed = (time.perf_counter() - start) * 1000  # ms
         times.append(elapsed)
     
-    throughput_static = calculate_throughput_mbps(pairs_static, h_linear)
+    throughput_static, noma_pairs_static, oma_users_static, total_rate_static = calculate_throughput_mbps(pairs_static, h_linear, n_users)
     
     results.append({
         'Method': 'Static',
         'Time_ms': np.mean(times),
         'Time_std_ms': np.std(times),
-        'Pairs': len(pairs_static),
-        'Pairing_Efficiency_%': (len(pairs_static) * 2 / n_users) * 100,
+        'NOMA_Pairs': noma_pairs_static,
+        'OMA_Users': oma_users_static,
+        'Users_Served': noma_pairs_static * 2 + oma_users_static,
+        'Pairing_Efficiency_%': (noma_pairs_static * 2 / n_users) * 100,
         'Throughput_Mbps': throughput_static,
-        'Avg_Sum_Rate_bps_Hz': throughput_static * 1e6 / B_TOTAL / len(pairs_static) if len(pairs_static) > 0 else 0
+        'Avg_Sum_Rate_bps_Hz': total_rate_static / noma_pairs_static if noma_pairs_static > 0 else 0,
+        'Per_Pair_BW_kHz': 180.0  # Fixed bandwidth
     })
     print(f"  ✓ Time: {np.mean(times):.4f} ± {np.std(times):.4f} ms")
-    print(f"  ✓ Pairs: {len(pairs_static)} ({len(pairs_static)*2}/{n_users} users)")
-    print(f"  ✓ Throughput: {throughput_static:.2f} Mbps")
+    print(f"  ✓ NOMA Pairs: {noma_pairs_static}, OMA Users: {oma_users_static}")
+    print(f"  ✓ Throughput: {throughput_static:.2f} Mbps (180 kHz × {noma_pairs_static} pairs)")
     
     # --- METHOD 2: BALANCED ---
     print(f"\n[4/6] Running BALANCED pairing...")
@@ -479,20 +516,23 @@ def run_comparison(h_values_file: str,
         elapsed = (time.perf_counter() - start) * 1000
         times.append(elapsed)
     
-    throughput_balanced = calculate_throughput_mbps(pairs_balanced, h_linear)
+    throughput_balanced, noma_pairs_balanced, oma_users_balanced, total_rate_balanced = calculate_throughput_mbps(pairs_balanced, h_linear, n_users)
     
     results.append({
         'Method': 'Balanced',
         'Time_ms': np.mean(times),
         'Time_std_ms': np.std(times),
-        'Pairs': len(pairs_balanced),
-        'Pairing_Efficiency_%': (len(pairs_balanced) * 2 / n_users) * 100,
+        'NOMA_Pairs': noma_pairs_balanced,
+        'OMA_Users': oma_users_balanced,
+        'Users_Served': noma_pairs_balanced * 2 + oma_users_balanced,
+        'Pairing_Efficiency_%': (noma_pairs_balanced * 2 / n_users) * 100,
         'Throughput_Mbps': throughput_balanced,
-        'Avg_Sum_Rate_bps_Hz': throughput_balanced * 1e6 / B_TOTAL / len(pairs_balanced) if len(pairs_balanced) > 0 else 0
+        'Avg_Sum_Rate_bps_Hz': total_rate_balanced / noma_pairs_balanced if noma_pairs_balanced > 0 else 0,
+        'Per_Pair_BW_kHz': 180.0  # Fixed bandwidth
     })
     print(f"  ✓ Time: {np.mean(times):.4f} ± {np.std(times):.4f} ms")
-    print(f"  ✓ Pairs: {len(pairs_balanced)} ({len(pairs_balanced)*2}/{n_users} users)")
-    print(f"  ✓ Throughput: {throughput_balanced:.2f} Mbps")
+    print(f"  ✓ NOMA Pairs: {noma_pairs_balanced}, OMA Users: {oma_users_balanced}")
+    print(f"  ✓ Throughput: {throughput_balanced:.2f} Mbps (180 kHz × {noma_pairs_balanced} pairs)")
     
     # --- METHOD 3: BIPARTITE ---
     print(f"\n[5/6] Running BIPARTITE pairing...")
@@ -506,44 +546,51 @@ def run_comparison(h_values_file: str,
         times.append(elapsed)
         print(f"{elapsed:.2f} ms")
     
-    throughput_bipartite = calculate_throughput_mbps(pairs_bipartite, h_linear)
+    throughput_bipartite, noma_pairs_bipartite, oma_users_bipartite, total_rate_bipartite = calculate_throughput_mbps(pairs_bipartite, h_linear, n_users)
     
     results.append({
         'Method': 'Bipartite',
         'Time_ms': np.mean(times),
         'Time_std_ms': np.std(times),
-        'Pairs': len(pairs_bipartite),
-        'Pairing_Efficiency_%': (len(pairs_bipartite) * 2 / n_users) * 100,
+        'NOMA_Pairs': noma_pairs_bipartite,
+        'OMA_Users': oma_users_bipartite,
+        'Users_Served': noma_pairs_bipartite * 2 + oma_users_bipartite,
+        'Pairing_Efficiency_%': (noma_pairs_bipartite * 2 / n_users) * 100,
         'Throughput_Mbps': throughput_bipartite,
-        'Avg_Sum_Rate_bps_Hz': throughput_bipartite * 1e6 / B_TOTAL / len(pairs_bipartite) if len(pairs_bipartite) > 0 else 0
+        'Avg_Sum_Rate_bps_Hz': total_rate_bipartite / noma_pairs_bipartite if noma_pairs_bipartite > 0 else 0,
+        'Per_Pair_BW_kHz': 180.0  # Fixed bandwidth
     })
     print(f"  ✓ Mean Time: {np.mean(times):.2f} ± {np.std(times):.2f} ms")
-    print(f"  ✓ Pairs: {len(pairs_bipartite)} ({len(pairs_bipartite)*2}/{n_users} users)")
-    print(f"  ✓ Throughput: {throughput_bipartite:.2f} Mbps")
+    print(f"  ✓ NOMA Pairs: {noma_pairs_bipartite}, OMA Users: {oma_users_bipartite}")
+    print(f"  ✓ Throughput: {throughput_bipartite:.2f} Mbps (180 kHz × {noma_pairs_bipartite} pairs)")
     
     # --- METHOD 4: BLOSSOM ---
     if not skip_blossom:
         print(f"\n[6/6] Running BLOSSOM pairing...")
         print(f"  Note: O(N³) with high constants - VERY slow for large N")
+        print(f"  Running single iteration due to computational cost...")
         
         start = time.perf_counter()
         pairs_blossom = blossom_pairing(h_linear, angles, show_progress=True)
         elapsed = (time.perf_counter() - start) * 1000
         
-        throughput_blossom = calculate_throughput_mbps(pairs_blossom, h_linear)
+        throughput_blossom, noma_pairs_blossom, oma_users_blossom, total_rate_blossom = calculate_throughput_mbps(pairs_blossom, h_linear, n_users)
         
         results.append({
             'Method': 'Blossom',
             'Time_ms': elapsed,
-            'Time_std_ms': 0.0,
-            'Pairs': len(pairs_blossom),
-            'Pairing_Efficiency_%': (len(pairs_blossom) * 2 / n_users) * 100,
+            'Time_std_ms': np.nan,  # Single run - no std dev
+            'NOMA_Pairs': noma_pairs_blossom,
+            'OMA_Users': oma_users_blossom,
+            'Users_Served': noma_pairs_blossom * 2 + oma_users_blossom,
+            'Pairing_Efficiency_%': (noma_pairs_blossom * 2 / n_users) * 100,
             'Throughput_Mbps': throughput_blossom,
-            'Avg_Sum_Rate_bps_Hz': throughput_blossom * 1e6 / B_TOTAL / len(pairs_blossom) if len(pairs_blossom) > 0 else 0
+            'Avg_Sum_Rate_bps_Hz': total_rate_blossom / noma_pairs_blossom if noma_pairs_blossom > 0 else 0,
+            'Per_Pair_BW_kHz': 180.0  # Fixed bandwidth
         })
-        print(f"  ✓ Time: {elapsed:.2f} ms ({elapsed/1000:.2f} s)")
-        print(f"  ✓ Pairs: {len(pairs_blossom)} ({len(pairs_blossom)*2}/{n_users} users)")
-        print(f"  ✓ Throughput: {throughput_blossom:.2f} Mbps")
+        print(f"  ✓ Time: {elapsed:.2f} ms ({elapsed/1000:.2f} s) [single run]")
+        print(f"  ✓ NOMA Pairs: {noma_pairs_blossom}, OMA Users: {oma_users_blossom}")
+        print(f"  ✓ Throughput: {throughput_blossom:.2f} Mbps (180 kHz × {noma_pairs_blossom} pairs)")
     else:
         print(f"\n[6/6] BLOSSOM pairing SKIPPED (use --run-blossom to enable)")
     
@@ -558,20 +605,23 @@ def run_comparison(h_values_file: str,
         times.append(elapsed)
         print(f"{elapsed:.2f} ms")
     
-    throughput_gnn = calculate_throughput_mbps(pairs_gnn, h_linear)
+    throughput_gnn, noma_pairs_gnn, oma_users_gnn, total_rate_gnn = calculate_throughput_mbps(pairs_gnn, h_linear, n_users)
     
     results.append({
         'Method': 'NOMA-GNN',
         'Time_ms': np.mean(times),
         'Time_std_ms': np.std(times),
-        'Pairs': len(pairs_gnn),
-        'Pairing_Efficiency_%': (len(pairs_gnn) * 2 / n_users) * 100,
+        'NOMA_Pairs': noma_pairs_gnn,
+        'OMA_Users': oma_users_gnn,
+        'Users_Served': noma_pairs_gnn * 2 + oma_users_gnn,
+        'Pairing_Efficiency_%': (noma_pairs_gnn * 2 / n_users) * 100,
         'Throughput_Mbps': throughput_gnn,
-        'Avg_Sum_Rate_bps_Hz': throughput_gnn * 1e6 / B_TOTAL / len(pairs_gnn) if len(pairs_gnn) > 0 else 0
+        'Avg_Sum_Rate_bps_Hz': total_rate_gnn / noma_pairs_gnn if noma_pairs_gnn > 0 else 0,
+        'Per_Pair_BW_kHz': 180.0  # Fixed bandwidth
     })
     print(f"  ✓ Mean Time: {np.mean(times):.2f} ± {np.std(times):.2f} ms")
-    print(f"  ✓ Pairs: {len(pairs_gnn)} ({len(pairs_gnn)*2}/{n_users} users)")
-    print(f"  ✓ Throughput: {throughput_gnn:.2f} Mbps")
+    print(f"  ✓ NOMA Pairs: {noma_pairs_gnn}, OMA Users: {oma_users_gnn}")
+    print(f"  ✓ Throughput: {throughput_gnn:.2f} Mbps (180 kHz × {noma_pairs_gnn} pairs)")
     
     # ==================== SAVE RESULTS ====================
     results_df = pd.DataFrame(results)
