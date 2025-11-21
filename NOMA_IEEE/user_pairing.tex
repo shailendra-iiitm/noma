@@ -1,0 +1,128 @@
+\section{User Pairing Strategies for PD-NOMA}
+\label{sec:pairing-strategies}
+
+The performance of PD-NOMA depends critically on which users share the same physical resource block (PRB). In this section, we outline the pairing strategies used as baselines and as label generators for learning, starting from simple heuristics and progressing to graph-based optimization, with particular emphasis on the bipartite formulation.
+
+\subsection{Heuristic Pairing Methods}
+
+Heuristic approaches exploit ordered channel gains and offer very low computational cost. In both strategies, candidate pairs are formed from sorted users; infeasible pairs are later removed using SIC and angular constraints.
+
+\subsubsection{Static Strong–Weak Pairing}
+
+Users are sorted by channel gain $|h_i|^2$ and paired from opposite ends to maximize gain disparity:
+\begin{equation}
+\mathcal{P}_{\text{static}}
+=\{(u_{(1)},u_{(N)}), (u_{(2)},u_{(N-1)}), \ldots, (u_{(N/2)},u_{(N/2+1)})\},
+\end{equation}
+where $u_{(1)}$ and $u_{(N)}$ denote the weakest and strongest users, respectively. This yields a large ratio $|h_j|^2/|h_i|^2$, which is favorable for SIC. A simple baseline power split is used, for example
+\[
+P_i = P_{\mathrm{tot}} \frac{|h_j|^2}{|h_i|^2 + |h_j|^2}, \qquad
+P_j = P_{\mathrm{tot}} - P_i.
+\]
+Pairs that fail the SIC or angular-gap requirements are dropped, leaving some users unpaired. The method has complexity $O(N \log N)$ but ignores spatial geometry and fairness.
+
+\subsubsection{Balanced Pairing}
+
+To improve fairness, balanced pairing divides users into weak and strong halves after sorting:
+\begin{equation}
+\mathcal{P}_{\text{bal}}
+=\{(u_{(1)},u_{(N/2+1)}), (u_{(2)},u_{(N/2+2)}), \ldots, (u_{(N/2)},u_{(N)})\}.
+\end{equation}
+This reduces channel disparity compared to static pairing and yields more homogeneous rates, but many candidate pairs still fail SIC under realistic fading. Power allocation again follows a fixed, non-optimized rule. Both heuristics are therefore suitable as low-complexity baselines but not as optimal design tools for dense networks.
+
+\subsection{Graph Matching Formulation}
+
+To explicitly account for physical constraints and achievable rates, we model pairing as a maximum-weight matching problem on a graph. Let $G=(V,E)$, where $V$ is the set of users and $(i,j)\in E$ indicates that users $i$ and $j$ form a feasible NOMA pair.
+
+\subsubsection{Graph Construction}
+
+Edges are created only if the following constraints hold:
+
+\textit{(i) SIC feasibility:}
+\begin{equation}
+\frac{|h_j|^2}{|h_i|^2} \ge 10^{0.8} \approx 6.31 \ \text{(8 dB)}, 
+\qquad |h_j|^2 > |h_i|^2 ,
+\end{equation}
+
+\textit{(ii) Angular separation:}
+\begin{equation}
+|\theta_i - \theta_j| \ge 25^\circ,
+\end{equation}
+to avoid highly correlated channels.
+
+For each feasible pair $(i,j)$, the edge weight is defined as the maximum achievable sum-rate over a practical power-split range:
+\begin{equation}
+\label{eq:edge_weight}
+w_{ij} = \max_{\alpha \in (0.5,1)} 
+\Big[
+\log_2\big(1+\mathrm{SINR}_i(\alpha)\big)
++
+\log_2\big(1+\mathrm{SINR}_j(\alpha)\big)
+\Big],
+\end{equation}
+where $\mathrm{SINR}_i(\alpha)$ and $\mathrm{SINR}_j(\alpha)$ follow the expressions in Section~III. A matching $M \subseteq E$ is a set of edges with no shared vertices, and the maximum-weight matching (MWM) problem is
+\begin{equation}
+\label{eq:mwm}
+M^\star = \arg\max_{M \subseteq E} \sum_{(i,j) \in M} w_{ij}.
+\end{equation}
+
+\subsection{Optimal Matching Algorithms}
+
+\subsubsection{Blossom Algorithm (General Graph)}
+
+For general graphs (no imposed strong–weak structure), Edmonds’ Blossom algorithm \cite{edmonds1965} solves \eqref{eq:mwm} optimally with complexity $\mathcal{O}(N^3)$. It provides a throughput benchmark but is unsuitable for real-time scheduling at large $N$ due to its cubic scaling and large constant factor.
+
+\subsubsection{Bipartite Matching}
+
+The physical structure of NOMA naturally suggests partitioning users into weak and strong sets, $U_W$ and $U_S$, and allowing edges only across the partition:
+\begin{equation}
+\begin{aligned}
+E_{\text{bip}} = \{(i,j) : i \in U_W,\ j \in U_S,\ \\
+&\text{pair satisfies SIC and angular constraints}\}.
+\end{aligned}
+\end{equation}
+On this bipartite graph, we adopt a proportional-fair (PF) weighting to balance throughput and fairness:
+\begin{equation}
+w_{ij}^{\text{PF}} = \log(R_i + \epsilon) + \log(R_j + \epsilon),
+\end{equation}
+where $\epsilon = 10^{-12}$ avoids $\log(0)$ and $R_i,R_j$ are achievable rates for a fixed power policy. The Hungarian algorithm computes the maximum-weight bipartite matching with worst-case complexity $\mathcal{O}(N^3)$, but the effective runtime is significantly reduced in sparse NOMA graphs.
+
+In our simulations, bipartite matching achieves $95$–$98\%$ of the throughput of Blossom while enforcing the strong–weak structure required for SIC and exhibiting faster practical execution.
+
+\subsection{Method Comparison}
+
+Table~\ref{tab:method_comparison} summarizes the qualitative trade-offs among the pairing strategies.
+
+\begin{table}[t]
+\centering
+\caption{Comparison of user pairing strategies for PD-NOMA.}
+\label{tab:method_comparison}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Method}   & \textbf{Complexity}      & \textbf{Optimality} & \textbf{Real-time suitability} \\
+\midrule
+Static          & $O(N \log N)$            & Heuristic           & High      \\
+Balanced        & $O(N \log N)$            & Heuristic           & High      \\
+Blossom         & $O(N^3)$                 & Optimal             & Low       \\
+Bipartite PF    & $O(N^2)$–$O(N^3)$        & Near-optimal        & Moderate  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Heuristic schemes are attractive for their low complexity but lack performance guarantees and frequently violate SIC or fairness criteria. Blossom yields the global optimum but is not scalable to dense deployments. Bipartite proportional-fair matching offers a favorable compromise, enforcing strong–weak pairing, achieving near-optimal throughput in practice, and serving as a high-quality label generator for learning-based methods.
+
+%\subsection{OMA Fallback}
+
+%Users that cannot be paired under the NOMA constraints are served via orthogonal multiple access. Let $\mathcal{P}$ denote the set of NOMA pairs and $\mathcal{U}_{\mathrm{OMA}}$ the set of unpaired users. The effective bandwidth per stream is
+%\begin{equation}
+%B_{\text{unit}} = \frac{B}{|\mathcal{P}| + |\mathcal{U}_{\mathrm{OMA}}|},
+%\end{equation}
+%and the throughput of user $i$ is
+%\begin{equation}
+%T_i = R_i \, \frac{B_{\text{unit}}}{10^6} \ \text{Mbps},
+%\end{equation}
+%where $R_i$ is the spectral efficiency in bits/s/Hz.
+
+\subsection{Motivation for Learning-Based Approaches}
+
+Although bipartite matching represents a strong optimization baseline, its $\mathcal{O}(N^2)$–$\mathcal{O}(N^3)$ complexity and repeated recomputation across coherence intervals become prohibitive in dense, fast-fading networks with millisecond-level TTI. This motivates learning-based strategies that amortize the cost of optimization: a model is trained offline using optimal or near-optimal matchings (e.g., Blossom or bipartite solutions) and then used online to predict high-quality pairings with $O(N \log N)$ inference. The next section introduces NOMA-GNN, a GraphSAGE-based framework that approximates bipartite matching with significantly reduced runtime while preserving most of the throughput gains.

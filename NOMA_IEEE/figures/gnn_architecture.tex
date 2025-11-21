@@ -1,0 +1,85 @@
+% GNN Architecture Diagram - Compact Version
+\begin{tikzpicture}[
+    node/.style={circle, draw=black!90, fill=blue!35, very thick, minimum size=9mm, font=\small},
+    feature/.style={rectangle, draw=black!80, fill=green!25, very thick, minimum width=18mm, minimum height=7mm, font=\small, align=center},
+    layer/.style={rectangle, draw=black!80, fill=orange!25, very thick, minimum width=26mm, minimum height=9mm, font=\small\bfseries, align=center},
+    decoder/.style={rectangle, draw=black!80, fill=purple!25, very thick, minimum width=22mm, minimum height=8mm, font=\small, align=center},
+    arrow/.style={->, >=stealth, very thick},
+    scale=0.88, every node/.style={scale=0.88}
+]
+
+% Input Layer - Graph Structure (Left Side)
+\node[font=\normalsize\bfseries] at (0, 6) {Input Graph};
+\node[node] (u1) at (-0.7, 5) {$u_1$};
+\node[node] (u2) at (0.7, 5) {$u_2$};
+\node[node] (u3) at (-0.7, 3.8) {$u_3$};
+\node[node] (u4) at (0.7, 3.8) {$u_4$};
+
+% Edges
+\draw[very thick, gray!70] (u1) -- (u2);
+\draw[very thick, gray!70] (u1) -- (u3);
+\draw[very thick, gray!70] (u2) -- (u4);
+\draw[very thick, gray!70] (u3) -- (u4);
+
+% Node Features
+\node[font=\small, below=10mm of u3, text width=30mm, align=center] {Features: $|h_i|^2, d_i, \theta_i$};
+
+% GraphSAGE Encoder (Center)
+\begin{scope}[xshift=5.5cm]
+    \node[font=\normalsize\bfseries] at (0, 6) {Encoder};
+    \node[layer] (sage1) at (0, 5.2) {GraphSAGE\\Layer 1};
+    \node[layer, below=7mm of sage1] (sage2) {GraphSAGE\\Layer 2};
+    \node[layer, below=7mm of sage2] (sage3) {GraphSAGE\\Layer 3};
+    
+    \draw[arrow] (sage1) -- node[right, font=\scriptsize] {$\mathbf{h}^{(1)}$} (sage2);
+    \draw[arrow] (sage2) -- node[right, font=\scriptsize] {$\mathbf{h}^{(2)}$} (sage3);
+    
+    \node[feature, below=3mm of sage3, fill=cyan!30] (emb) {Embeddings\\$\mathbb{R}^{128}$};
+    \draw[arrow] (sage3) -- (emb);
+\end{scope}
+
+% Connection from input to encoder
+\draw[arrow, dashed, gray!60] (u2) -- (sage1);
+\draw[arrow, dashed, gray!60] (u3) -- (sage1);
+
+% Edge Processing (Right Center)
+\begin{scope}[xshift=10cm]
+    \node[feature, fill=yellow!30, minimum width=24mm] (concat) at (0, 3.3) {Edge Concat\\$[\mathbf{h}_i \| \mathbf{h}_j]$};
+\end{scope}
+
+\draw[arrow] (emb) -| (concat);
+
+% Multi-Task Decoders (Right Side)
+\begin{scope}[xshift=14cm]
+    \node[font=\normalsize\bfseries] at (0, 6) {Decoders};
+    
+    \node[decoder] (pair) at (0, 5) {Pairing\\Classifier};
+    \node[decoder, below=7mm of pair] (rate) {Sum-Rate\\Regressor};
+    \node[decoder, below=7mm of rate] (power) {Power\\Regressor};
+    
+    % Outputs
+    \node[feature, right=9mm of pair, fill=red!30, minimum width=16mm] (out1) {$p_{ij}$};
+    \node[feature, right=9mm of rate, fill=red!30, minimum width=16mm] (out2) {$\hat{r}_{ij}$};
+    \node[feature, right=9mm of power, fill=red!30, minimum width=16mm] (out3) {$\hat{\alpha}_{ij}$};
+    
+    \draw[arrow] (pair) -- (out1);
+    \draw[arrow] (rate) -- (out2);
+    \draw[arrow] (power) -- (out3);
+    
+    % Output labels
+    \node[font=\small, right=2mm of out1] {Pairing};
+    \node[font=\small, right=2mm of out2] {Rate};
+    \node[font=\small, right=2mm of out3] {Power};
+\end{scope}
+
+% Connections from concat to decoders
+\draw[arrow] (concat.east) -- ++(0.5,0) |- (pair.west);
+\draw[arrow] (concat.east) -- (rate.west);
+\draw[arrow] (concat.east) -- ++(0.5,0) |- (power.west);
+
+% Complexity annotation at bottom
+\node[draw, very thick, fill=gray!15, rectangle, text width=100mm, font=\small, align=center] at (7.5, -.8) {
+\textbf{Complexity:} Training $O(E \cdot D^2)$ — Inference $O(N \log N)$
+};
+
+\end{tikzpicture}

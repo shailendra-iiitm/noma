@@ -1,0 +1,93 @@
+% AEU - International Journal of Electronics and Communications
+% Elsevier Article Template
+
+\documentclass[review,3p]{elsarticle}
+
+% ====== Required Packages ======
+\usepackage{lineno}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows, positioning, calc, shapes.geometric}
+
+% Graphics path
+\graphicspath{{figures/}}
+
+% Line numbering for review
+\modulolinenumbers[5]
+
+% Journal specific commands
+\journal{AEU - International Journal of Electronics and Communications}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{GraphSAGE-Based Multi-Task Graph Neural Network for Joint User Pairing and Power Allocation in Downlink Power-Domain NOMA Systems}
+
+% Author information
+\author[inst1]{Shailendra Shukla}
+\ead{shailendra@iiitmanipur.ac.in}
+
+\author[inst1]{Anisha Dwivedi}
+\ead{anishas1121@iiitmanipur.ac.in}
+
+\author[inst1]{Ramesh Ch. Mishra\corref{cor1}}
+\ead{m.ramesh@iiitmanipur.ac.in}
+
+\address[inst1]{Department of Electronics and Communication Engineering, Indian Institute of Information Technology, Senapati, Manipur 795002, India}
+
+\cortext[cor1]{Corresponding author.}
+
+\begin{abstract}
+Power-domain non-orthogonal multiple access (PD-NOMA) significantly improves spectral efficiency in 5G and beyond networks through intelligent user pairing and power allocation. However, traditional optimization-based methods exhibit cubic computational complexity ($O(N^3)$), hindering real-time deployment in large-scale networks. We propose NOMA-GNN, a GraphSAGE-based graph neural network framework that reformulates user pairing as a graph representation learning problem. The system incorporates realistic 3GPP TR 38.901 urban macro channel modeling and embeds physical constraints including successive interference cancellation (SIC) feasibility and angular separation directly into the graph structure. Training on 200 diverse network scenarios (each with 500 users, totaling 100,000 samples), the model achieves near-optimal throughput (95.7--96.5\% of optimal) across network sizes ranging from 500 to 2000 users, while delivering substantial computational speedups: 28.1× at 500 users, 64.0× at 1000 users, and 114.4× at 2000 users compared to optimal bipartite matching. The proposed solution operates in $O(N \log N)$ time with 752 ms inference latency for 500 users, enabling practical real-time scheduling. The lightweight architecture (166K parameters, 650 KB footprint) is suitable for edge base station deployment, supporting scalable NOMA in dense 5G New Radio networks. Fairness analysis confirms equitable resource allocation (Jain's index 0.9851) without throughput sacrifice, while t-SNE visualization of learned embeddings reveals physically meaningful clustering patterns that validate the model's interpretability.
+\end{abstract}
+
+\begin{keyword}
+Power-domain NOMA \sep Graph neural networks \sep GraphSAGE \sep User pairing \sep Power allocation \sep Deep learning \sep Resource management \sep 5G/6G networks \sep Successive interference cancellation
+\end{keyword}
+
+\end{frontmatter}
+
+% Enable line numbers for review
+\linenumbers
+
+\input{introduction.tex}
+
+\input{literature_review.tex}
+
+\input{system_model.tex}
+
+\input{user_pairing.tex}
+
+\input{gnn_methodology.tex}
+
+\input{simulation_setup.tex}
+
+\input{result_discussion.tex}
+
+\input{conclusion.tex}
+
+% ====== Acknowledgments ======
+\section*{Acknowledgments}
+The authors would like to thank the reviewers for their valuable comments and suggestions that helped improve the quality of this manuscript.
+
+% ====== Declaration of Competing Interest ======
+\section*{Declaration of Competing Interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+% ====== Data Availability ======
+\section*{Data Availability}
+The datasets and code generated during the current study are available from the corresponding author on reasonable request.
+
+% ====== References ======
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\end{document}

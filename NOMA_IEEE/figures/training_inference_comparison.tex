@@ -1,0 +1,61 @@
+% Training vs Inference Comparison
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={scale=0.9}
+]
+
+% Training Phase (Left Side)
+\begin{scope}
+    \node[font=\small\bfseries] at (0, 3.5) {Training Phase};
+    
+    % Training boxes
+    \node[draw, thick, fill=blue!15, rectangle, minimum width=35mm, minimum height=8mm, font=\footnotesize] (train_data) at (0, 2.5) {200 Scenarios (N=500)};
+    
+    \node[draw, thick, fill=orange!15, rectangle, minimum width=35mm, minimum height=8mm, font=\footnotesize, align=center] (blossom) at (0, 1.3) {Blossom Matching\\(Ground Truth)};
+    
+    \node[draw, thick, fill=green!15, rectangle, minimum width=35mm, minimum height=8mm, font=\footnotesize, align=center] (gnn_train) at (0, 0.1) {GNN Training\\60 Epochs};
+    
+    \node[draw, thick, fill=purple!15, rectangle, minimum width=35mm, minimum height=8mm, font=\footnotesize, align=center] (model) at (0, -1.1) {Trained Model\\(166K params)};
+    
+    % Arrows
+    \draw[->, >=stealth, thick] (train_data) -- (blossom);
+    \draw[->, >=stealth, thick] (blossom) -- (gnn_train);
+    \draw[->, >=stealth, thick] (gnn_train) -- (model);
+    
+    % Time annotation
+    \node[font=\tiny, gray, right=1mm of blossom] {30.4 s/graph};
+    \node[font=\tiny, gray, right=1mm of gnn_train] {$\sim$2 hours total};
+\end{scope}
+
+% Arrow between phases
+\draw[->, >=stealth, ultra thick, gray] (2, 0.5) -- (3.5, 0.5) node[midway, above, font=\small] {Deploy};
+
+% Inference Phase (Right Side)
+\begin{scope}[xshift=6cm]
+    \node[font=\small\bfseries] at (0, 3.5) {Inference Phase};
+    
+    % Inference boxes
+    \node[draw, thick, fill=blue!15, rectangle, minimum width=35mm, minimum height=8mm, font=\footnotesize] (new_csi) at (0, 2.5) {New CSI Snapshot};
+    
+    \node[draw, thick, fill=cyan!15, rectangle, minimum width=35mm, minimum height=8mm, font=\footnotesize, align=center] (fast_gnn) at (0, 1.3) {GNN Inference\\(No optimization)};
+    
+    \node[draw, thick, fill=green!15, rectangle, minimum width=35mm, minimum height=8mm, font=\footnotesize] (greedy) at (0, 0.1) {Greedy Matching};
+    
+    \node[draw, thick, fill=yellow!30, rectangle, minimum width=35mm, minimum height=8mm, font=\footnotesize, align=center] (result) at (0, -1.1) {User Pairs\\(96.5\% optimal)};
+    
+    % Arrows
+    \draw[->, >=stealth, thick] (new_csi) -- (fast_gnn);
+    \draw[->, >=stealth, thick] (fast_gnn) -- (greedy);
+    \draw[->, >=stealth, thick] (greedy) -- (result);
+    
+    % Time annotation
+    \node[font=\tiny, text=green!50!black, right=1mm of fast_gnn] {\textbf{752 ms}};
+    \node[font=\tiny, text=green!50!black, right=1mm of result] {\textbf{40.4× faster}};
+\end{scope}
+
+% Bottom comparison box
+\node[draw, double, thick, fill=gray!10, rectangle, text width=75mm, font=\footnotesize, align=center] at (3, -2.5) {
+\textbf{Key Advantage:} Expensive optimization done once offline\\
+Fast inference for real-time deployment
+};
+
+\end{tikzpicture}

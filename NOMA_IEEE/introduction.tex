@@ -1,0 +1,65 @@
+\section{Introduction}
+With the exponential growth of 5G networks and the imminent arrival of 6G systems, the telecommunications landscape faces unprecedented challenges in managing massive device connectivity while maximizing spectrum efficiency. PD-NOMA, has emerged as a transformative technology to address these challenges. Unlike conventional orthogonal multiple access (OMA), where users occupy exclusive time-frequency resources, PD-NOMA allows multiple users to share identical resources through power-domain multiplexing, achieving superior spectral efficiency and enhanced fairness for cell-edge users.
+
+The fundamental principle of PD-NOMA lies in assigning differential power levels to users based on their channel conditions: weaker users receive higher transmit power, while stronger users with better channel quality are allocated lower power and perform SIC to decode their signals. This asymmetric power allocation enables simultaneous transmission to multiple users, thereby improving overall system capacity and user experience, especially in dense urban environments.
+
+However, realizing the full potential of PD-NOMA critically depends on intelligent \emph{user pairing} or \emph{clustering}—the strategic selection of which users should share the same physical resource block (PRB). Suboptimal pairing decisions lead to increased inter-user interference, degraded SIC performance, and diminished system throughput. The pairing problem is inherently combinatorial with complexity growing exponentially with user count, making real-time optimal solutions computationally prohibitive for practical deployments.
+
+\subsection{Motivation and Problem Statement}
+
+Traditional approaches to user pairing in NOMA systems rely on heuristic algorithms or optimization frameworks that, while effective, suffer from several limitations:
+
+\begin{itemize}
+    \item \textbf{Computational Complexity:} Optimal matching algorithms (e.g., Hungarian, Blossom) have $O(N^3)$ complexity, becoming impractical for large user populations or real-time scheduling requirements.
+    \item \textbf{Channel Model Sensitivity:} Heuristic methods often assume simplified channel models and may not generalize well to realistic propagation environments with complex fading, shadowing, and path loss characteristics.
+    \item \textbf{Static Decision Rules:} Fixed pairing strategies (e.g., strongest-with-weakest) cannot adapt to dynamic channel conditions or varying system objectives (throughput vs. fairness trade-offs).
+    \item \textbf{Separate Optimization Stages:} Existing methods typically decouple pairing selection from power allocation, potentially yielding suboptimal joint solutions.
+\end{itemize}
+
+These challenges motivate the exploration of \emph{data-driven learning} approaches that can discover optimal pairing patterns from historical channel data and deployment scenarios.
+
+\subsection{Contributions}
+
+This work presents a comprehensive framework combining traditional optimization-based clustering with modern deep learning techniques for NOMA user pairing. Our specific contributions are:
+
+\begin{enumerate}
+    \item \textbf{Realistic Channel Modeling:} We generate high-fidelity Channel State Information (CSI) using the standardized 3GPP TR 38.901 Urban Macro (UMa) model, incorporating path loss, log-normal shadowing, and small-scale fading to ensure practical relevance.
+    
+    \item \textbf{Comparative Baseline Analysis:} We implement and thoroughly evaluate four classical user clustering strategies:
+    \begin{itemize}
+        \item \emph{Static Pairing}: Pairs strongest and weakest users
+        \item \emph{Balanced Pairing}: Matches users from upper and lower channel quality halves
+        \item \emph{Blossom Matching}: Applies Edmonds' algorithm for maximum-weight general graph matching
+        \item \emph{Bipartite Graph Matching}: Formulates strong-weak pairing as bipartite maximum-weight matching
+    \end{itemize}
+    
+    \item \textbf{Graph Neural Network Framework:} We propose NOMA-GNN, a novel GraphSAGE-based deep learning architecture that:
+    \begin{itemize}
+        \item Treats users as graph nodes with CSI-derived features (channel gain, distance, angle)
+        \item Learns message-passing representations capturing user relationships
+        \item Predicts pairwise compatibility scores for user pairing decisions
+        \item Enforces physical constraints (SIC feasibility, angular separation) during candidate generation
+        \item Achieves $O(N \log N)$ inference complexity via greedy matching on predicted scores
+    \end{itemize}
+    
+    \item \textbf{End-to-End Learning Pipeline:} We develop a complete data processing, training, and deployment workflow:
+    \begin{itemize}
+        \item Automated graph construction from raw CSV channel measurements
+        \item Training on optimal pairing labels from Blossom algorithm
+        \item Real-time inference with SIC verification
+        \item Lightweight model (166K parameters) suitable for edge deployment
+    \end{itemize}
+    
+    \item \textbf{Comprehensive Performance Evaluation:} We provide extensive experimental analysis demonstrating:
+    \begin{itemize}
+        \item GNN achieves 96.5\% of optimal Blossom throughput (636.15 Mbps vs 659.07 Mbps) on N=500 scenarios
+        \item 40.4× speedup compared to Blossom matching (752 ms vs 30,363 ms)
+        \item $O(N \log N)$ complexity enabling practical deployment for N=500 users
+        \item Near-optimal sum-rate (15.71 bits/s/Hz) with efficient pairing strategy
+        \item Validated scalability across 500-2000 users: speedup increases to 64.0× (N=1000) and 114.4× (N=2000) while maintaining 95.7-96.5\% throughput efficiency
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Paper Organization}
+
+The remainder of this paper is structured as follows: Section II presents the literature review on NOMA optimization and deep learning for wireless systems. Section III details the 3GPP channel model and system assumptions. Section IV describes traditional clustering methodologies and the graph matching framework including Blossom and Bipartite approaches. Section V introduces the NOMA-GNN architecture, training procedure, and inference pipeline. Section VI presents simulation setup and analyzes comparative results between traditional and learning-based methods. Section VII concludes with future research directions.

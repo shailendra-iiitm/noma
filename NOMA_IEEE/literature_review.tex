@@ -1,0 +1,78 @@
+\section{Literature Review}
+
+Non-Orthogonal Multiple Access (NOMA) has been widely investigated in recent years as a strong candidate technology for future 5G and 6G networks. By superposing multiple users in the power domain and decoding them through Successive Interference Cancellation (SIC), PD-NOMA enables multiple users to share the same time–frequency resources. This approach improves spectral efficiency, enhances fairness between cell-center and cell-edge users, and supports massive connectivity compared to conventional Orthogonal Multiple Access (OMA). Numerous studies have demonstrated that with proper power allocation and user pairing, PD-NOMA can significantly outperform OMA in terms of sum rate and connectivity.
+
+\subsection{Channel Modeling}
+
+Accurate channel modeling is crucial for evaluating NOMA performance under realistic propagation conditions. Most recent works employ the standardized 3GPP TR~38.901 model, which defines procedures for path loss, line-of-sight (LOS) probability, shadow fading, and small-scale fading in different deployment scenarios such as Urban Macro (UMa), Urban Micro (UMi), and Rural Macro (RMa). Using such standardized models ensures that simulation outcomes are comparable across research efforts and that results reflect realistic signal propagation environments \cite{3gpp38901}. In this context, channel state information (CSI) generated from the 3GPP UMa model has been adopted in our work to simulate practical user distributions and fading statistics.
+
+\subsection{Traditional User Pairing Methods}
+
+User pairing or clustering has received extensive attention, as the performance of PD-NOMA largely depends on how users are grouped to share each resource block. Early heuristic methods include static and balanced pairing. In static pairing, users are sorted according to their channel gains, and the strongest user is paired with the weakest, maximizing channel disparity. Balanced pairing divides users into upper and lower halves of the gain distribution and pairs one from each half to achieve moderate fairness. These approaches are simple to implement and computationally efficient; however, they are not always optimal in terms of sum rate and fairness, especially under dynamic network conditions \cite{islam2016,su2017}.
+
+\subsection{Graph-Theoretic Optimization}
+
+To achieve better performance, many studies have modeled the user pairing problem using graph theory. Each user is represented as a node, and an edge between two nodes denotes a possible pairing, often weighted by achievable rate, fairness, or channel gain difference. In this direction, Köse \textit{et al.} \cite{kose2021graph} formulated the downlink NOMA pairing problem as a conflict graph and proved it to be claw-free, which enabled them to solve the Maximum Weighted Independent Set (MWIS) problem in polynomial time. The resulting algorithm guaranteed optimal pairing under fixed power allocations while satisfying minimum rate requirements and improving overall throughput. Other researchers have employed maximum weight matching algorithms such as the Blossom algorithm for general graphs, achieving globally optimal pairs at the cost of $O(N^3)$ computational complexity. To further reduce complexity, bipartite graph-based models have been developed, where users are divided into two sets—typically strong and weak—and matched optimally using algorithms like the Hungarian method \cite{jia2018,sensors2023}. Such graph-based frameworks provide near-optimal performance and scalability suitable for larger networks.
+
+Recent works by Mishra \textit{et al.} extended graph-theoretic pairing to NOMA-aided IoT scenarios. In \cite{mishra2021maximizing}, the authors focused on maximizing downlink user connection density in NB-IoT networks through a bipartite matching approach, introducing the Minimum-Weight Full Matching with Pruning (MWFMP) algorithm that efficiently assigns users to frequency–SIC combinations while satisfying per-PRB power constraints. The framework was later enhanced in \cite{mishra2022connection} to address uplink transmission under fast uplink grant (FUG) and deadline constraints. Their Connection Throughput Maximization with Bipartite Matching (CTMBM) scheme incorporated device deadlines, power budgets, and priority classes, achieving substantial throughput improvements with low complexity. These contributions highlight that graph-based pairing and scheduling can achieve scalability and near-optimality in dense NOMA-based IoT environments.
+
+\subsection{Deep Learning for Wireless Optimization}
+
+The application of deep learning to wireless resource allocation has grown dramatically in recent years. Deep Reinforcement Learning (DRL) approaches have shown promise for joint optimization problems. Jiang \textit{et al.} \cite{jiang2021joint} proposed a DRL framework for joint user pairing and power allocation, in which a Deep Q-Network (DQN) learns optimal pairing policies under QoS and SIC constraints. By integrating a closed-form power allocation solution, the model converged faster and achieved higher sum rates compared to heuristic and Q-learning baselines.
+
+More recently, supervised learning approaches have emerged. Sun \textit{et al.} \cite{sun2018learning} demonstrated that deep neural networks can learn optimal power control policies by training on solutions from convex optimization. He \textit{et al.} \cite{he2020learning} applied similar techniques to spectrum sharing, achieving near-optimal performance with millisecond inference times.
+
+\subsection{Graph Neural Networks for Communications}
+
+Graph Neural Networks (GNNs) have emerged as a powerful tool for problems with inherent graph structure. The pioneering GraphSAGE architecture \cite{hamilton2017inductive} introduced inductive learning on graphs through neighborhood sampling and aggregation, enabling generalization to unseen nodes and graphs—a critical property for wireless networks with time-varying topology.
+
+Several recent works have applied GNNs to wireless resource allocation:
+
+\begin{itemize}
+    \item \textbf{Spectrum Management:} Eisen \textit{et al.} \cite{eisen2020optimal} used GNNs for power control in interference networks, formulating the problem as node classification on conflict graphs. The GNN learned distributed policies achieving 95\% of optimal centralized performance.
+    
+    \item \textbf{Routing and Scheduling:} Rusek \textit{et al.} \cite{rusek2020graph} developed RouteNet, a GNN that predicts network performance metrics from routing configurations, enabling fast "what-if" analysis without full simulation.
+    
+    \item \textbf{MIMO Beamforming:} Chowdhury \textit{et al.} \cite{chowdhury2021unfolding} unfolded iterative beamforming algorithms into GNN architectures, combining optimization theory with learned representations.
+    
+    \item \textbf{Link Scheduling:} Shen \textit{et al.} \cite{shen2021graph} formulated link scheduling as edge classification on interference graphs, achieving near-optimal throughput with $O(E \log E)$ complexity.
+\end{itemize}
+
+\subsection{GNNs for NOMA Systems}
+
+The application of GNNs to NOMA remains relatively unexplored. Zhao \textit{et al.} \cite{zhao2020deep} proposed a GNN-based approach for NOMA resource allocation in vehicular networks, treating vehicles as nodes and potential communication links as edges. Their model jointly learned user clustering and power allocation, achieving 88\% of optimal performance with 50× speedup. However, the work focused on V2V scenarios with mobility-specific features and did not incorporate physical constraints like SIC feasibility.
+
+Wang \textit{et al.} \cite{wang2021graph} explored GNNs for uplink NOMA in massive IoT, using Graph Attention Networks (GATs) to prioritize critical devices. While achieving good throughput, the approach required labeled data from exhaustive search, limiting scalability to large user populations.
+
+\subsection{Multi-Task Learning in Wireless Networks}
+
+Multi-task learning (MTL) has proven effective for joint optimization in wireless systems. Naparstek \textit{et al.} \cite{naparstek2019deep} applied MTL to joint power control and user association, demonstrating that shared representations improve generalization. For NOMA, MTL is particularly relevant as pairing decisions, power allocation, and rate prediction are inherently coupled—optimal pairings depend on achievable rates, which in turn depend on power splits.
+
+\subsection{Gaps and Motivation}
+
+While analytical and graph-based methods provide tractable and efficient solutions, they suffer from high computational complexity ($O(N^3)$ for Blossom) unsuitable for real-time large-scale networks. Deep learning approaches, though promising, often:
+
+\begin{itemize}
+    \item Ignore physical constraints (SIC feasibility, power budgets), requiring post-processing
+    \item Focus on single objectives (throughput or fairness), not joint optimization
+    \item Lack interpretability, hindering deployment in safety-critical applications
+    \item Require retraining for different network configurations
+\end{itemize}
+
+Motivated by these observations, our work makes the following contributions:
+
+\begin{enumerate}
+    \item Implement and compare four representative traditional pairing techniques (Static, Balanced, Blossom, Bipartite) using 3GPP UMa CSI for fair benchmarking
+    
+    \item Develop NOMA-GNN, a GraphSAGE-based framework that:
+    \begin{itemize}
+        \item Enforces SIC and angular separation constraints during graph construction
+        \item Employs multi-task learning for joint pairing, sum-rate, and power prediction
+        \item Achieves inductive generalization to unseen user densities and channel conditions
+        \item Provides interpretable embeddings revealing learned pairing strategies
+    \end{itemize}
+    
+    \item Demonstrate 96.5\% of optimal Blossom throughput with 52.9× speedup and $O(N \log N)$ complexity, establishing practical viability for real-time deployment in dense networks
+\end{enumerate}
+
+This work bridges the gap between optimization-based and learning-based approaches, combining the theoretical rigor of graph matching with the adaptability and efficiency of Graph Neural Networks.

@@ -1,0 +1,79 @@
+% Graph Construction Process
+\begin{tikzpicture}[
+    user/.style={circle, draw=black!80, fill=blue!30, thick, minimum size=10mm, font=\footnotesize},
+    bs/.style={regular polygon, regular polygon sides=3, draw=black!80, fill=red!50, thick, minimum size=12mm},
+    edge/.style={thick, draw=green!60!black},
+    noedge/.style={thick, draw=red!60, dashed},
+    arrow/.style={->, >=stealth, thick},
+    scale=0.9, every node/.style={scale=0.9}
+]
+
+% Base Station
+\node[bs] (bs) at (0, 0) {};
+\node[font=\small\bfseries, below=1mm of bs] {BS};
+
+% Users
+\node[user] (u1) at (-2.5, 2) {$u_1$};
+\node[user] (u2) at (2.5, 2.5) {$u_2$};
+\node[user] (u3) at (-1.5, -2) {$u_3$};
+\node[user] (u4) at (2, -2.2) {$u_4$};
+
+% Channel info
+\node[font=\tiny, above=3mm of u1] {Strong};
+\node[font=\tiny, text=green!50!black] at ([yshift=3mm]u1.north) {$h_1 = -62$ dB};
+
+\node[font=\tiny, above=3mm of u2] {Strong};
+\node[font=\tiny, text=green!50!black] at ([yshift=3mm]u2.north) {$h_2 = -58$ dB};
+
+\node[font=\tiny, below=1mm of u3] {Weak};
+\node[font=\tiny, text=red!60!black] at ([yshift=-5mm]u3.south) {$h_3 = -98$ dB};
+
+\node[font=\tiny, below=1mm of u4] {Medium};
+\node[font=\tiny, text=orange!80!black] at ([yshift=-5mm]u4.south) {$h_4 = -75$ dB};
+
+% Lines to BS
+\draw[gray, thin, dashed] (bs) -- (u1);
+\draw[gray, thin, dashed] (bs) -- (u2);
+\draw[gray, thin, dashed] (bs) -- (u3);
+\draw[gray, thin, dashed] (bs) -- (u4);
+
+% Valid edges (SIC feasible + angular separation)
+\draw[edge, line width=1.5pt] (u1) to[bend left=15] node[midway, above, font=\tiny, fill=white] {Valid} (u3);
+\draw[edge, line width=1.5pt] (u2) to[bend right=15] node[midway, right, font=\tiny, fill=white] {Valid} (u4);
+
+% Invalid edge (too close in channel gain)
+\draw[noedge, line width=1.2pt] (u1) to[bend right=10] node[midway, above, font=\tiny, fill=white] {$\times$ Similar $h$} (u2);
+
+% Constraint boxes
+\node[draw, rectangle, thick, fill=yellow!20, text width=32mm, font=\tiny, align=left] at (-4.5, 0) {
+\textbf{Edge Constraints:}\\
+$\bullet$ $|h_i|^2 / |h_j|^2 \geq \gamma_{\text{SIC}}$\\
+$\bullet$ $|\theta_i - \theta_j| \geq 25^\circ$\\
+$\bullet$ $|h_i|^2 < |h_j|^2$
+};
+
+% Graph representation
+\begin{scope}[xshift=8cm, yshift=0.5cm]
+    \node[font=\small\bfseries] at (0, 2.8) {Graph $\mathcal{G}$};
+    
+    % Nodes
+    \node[user, minimum size=8mm] (g1) at (-1, 1.5) {$v_1$};
+    \node[user, minimum size=8mm] (g2) at (1, 1.5) {$v_2$};
+    \node[user, minimum size=8mm] (g3) at (-1, -0.5) {$v_3$};
+    \node[user, minimum size=8mm] (g4) at (1, -0.5) {$v_4$};
+    
+    % Edges with labels
+    \draw[edge, line width=1.5pt] (g1) -- (g3) node[midway, left, font=\tiny] {$e_{13}$};
+    \draw[edge, line width=1.5pt] (g2) -- (g4) node[midway, right, font=\tiny] {$e_{24}$};
+    
+    % Features
+    \node[font=\tiny, align=center, below=8mm of g3] {
+        $\mathbf{X} \in \mathbb{R}^{N \times 4}$\\
+        $\mathcal{E}$ = feasible pairs
+    };
+\end{scope}
+
+% Arrow indicating transformation
+\draw[->, ultra thick, gray] (4.5, 0) -- (6.5, 0) node[midway, above, font=\small] {Construct};
+
+\end{tikzpicture}

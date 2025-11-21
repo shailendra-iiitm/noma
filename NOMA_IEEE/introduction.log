@@ -1,0 +1,722 @@
+This is LuaHBTeX, Version 1.17.1 (MiKTeX 24.1) (format=lualatex 2025.10.25)  25 OCT 2025 23:45
+ restricted system commands enabled.
+**introduction.tex
+(./introduction.tex
+LaTeX2e <2023-11-01> patch level 1
+L3 programming layer <2024-01-04>
+Lua module: luaotfload 2023-08-31 3.26 Lua based OpenType font support
+Lua module: lualibs 2023-07-13 2.76 ConTeXt Lua standard libraries.
+Lua module: lualibs-extended 2023-07-13 2.76 ConTeXt Lua libraries -- extended c
+ollection.
+luaotfload | conf : Root cache directory is "C:/Users/sjoel/AppData/Local/MiKTeX
+/luatex-cache/generic/names".
+luaotfload | init : Loading fontloader "fontloader-2023-08-19.lua" from kpse-res
+olved path "C:/miktex/tex/luatex/luaotfload/fontloader-2023-08-19.lua".
+Lua-only attribute luaotfload@noligature = 1
+luaotfload | init : Context OpenType loader version 3.133
+Inserting `luaotfload.node_processor' in `pre_linebreak_filter'.
+Inserting `luaotfload.node_processor' in `hpack_filter'.
+Inserting `luaotfload.glyph_stream' in `glyph_stream_provider'.
+Inserting `luaotfload.define_font' in `define_font'.
+Lua-only attribute luaotfload_color_attribute = 2
+luaotfload | conf : Root cache directory is "C:/Users/sjoel/AppData/Local/MiKTeX
+/luatex-cache/generic/names".
+Inserting `luaotfload.harf.strip_prefix' in `find_opentype_file'.
+Inserting `luaotfload.harf.strip_prefix' in `find_truetype_file'.
+Removing  `luaotfload.glyph_stream' from `glyph_stream_provider'.
+Inserting `luaotfload.harf.glyphstream' in `glyph_stream_provider'.
+Inserting `luaotfload.harf.finalize_vlist' in `post_linebreak_filter'.
+Inserting `luaotfload.harf.finalize_hlist' in `hpack_filter'.
+Inserting `luaotfload.cleanup_files' in `wrapup_run'.
+Inserting `luaotfload.harf.finalize_unicode' in `finish_pdffile'.
+Inserting `luaotfload.glyphinfo' in `glyph_info'.
+Lua-only attribute luaotfload.letterspace_done = 3
+Inserting `luaotfload.aux.set_sscale_dimens' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.set_font_index' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.patch_cambria_domh' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.fixup_fontdata' in `luaotfload.patch_font_unsafe'.
+Inserting `luaotfload.aux.set_capheight' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.set_xheight' in `luaotfload.patch_font'.
+Inserting `luaotfload.rewrite_fontname' in `luaotfload.patch_font'.
+Inserting `tracingstacklevels' in `input_level_string'.
+! Undefined control sequence.
+l.1 \section
+          {Introduction}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.1 \section{I
+            ntroduction}
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 1--3
+[]Introduction
+ []
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.4 T
+   he fundamental principle of PD-NOMA lies in assigning differential power ...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 4--5
+[]The
+ []
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.6 H
+   owever, realizing the full potential of PD-NOMA critically depends on int...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+luaotfload | db : Font names database loaded from C:/Users/sjoel/AppData/Local/M
+iKTeX/luatex-cache/generic/names/luaotfload-names.luc.gz
+Overfull \hbox (20.0pt too wide) in paragraph at lines 6--7
+[]However,
+ []
+
+
+Overfull \hbox (18.28pt too wide) in paragraph at lines 6--7
+\TU/lmr/m/it/10 user
+ []
+
+
+Overfull \hbox (20.58002pt too wide) in paragraph at lines 6--7
+\TU/lmr/m/it/10 pair-
+ []
+
+
+Overfull \hbox (13.29001pt too wide) in paragraph at lines 6--7
+\TU/lmr/m/it/10 ing
+ []
+
+
+Overfull \hbox (20.2pt too wide) in paragraph at lines 6--7
+\TU/lmr/m/it/10 clus-
+ []
+
+
+Overfull \hbox (15.72002pt too wide) in paragraph at lines 6--7
+\TU/lmr/m/it/10 ter-
+ []
+
+
+Overfull \hbox (13.76001pt too wide) in paragraph at lines 6--7
+\TU/lmr/m/it/10 ing\nullfont —the
+ []
+
+! Undefined control sequence.
+l.8 \subsection
+             {Motivation and Problem Statement}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.8 \subsection{M
+               otivation and Problem Statement}
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 8--9
+[]Motivation
+ []
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.10 T
+    raditional approaches to user pairing in NOMA systems rely on heuristic ...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 10--11
+[]Traditional
+ []
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.12 \begin{itemize}
+                  
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 12--12
+[] 
+ []
+
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 13.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 13.
+
+Overfull \hbox (27.47pt too wide) in paragraph at lines 13--14
+\TU/lmr/bx/n/10 Com-
+ []
+
+
+Overfull \hbox (16.61pt too wide) in paragraph at lines 13--14
+\TU/lmr/bx/n/10 pu-
+ []
+
+
+Overfull \hbox (13.89pt too wide) in paragraph at lines 13--14
+\TU/lmr/bx/n/10 ta-
+ []
+
+
+Overfull \hbox (28.58pt too wide) in paragraph at lines 13--14
+\TU/lmr/bx/n/10 tional
+ []
+
+
+Overfull \hbox (27.47pt too wide) in paragraph at lines 13--14
+\TU/lmr/bx/n/10 Com-
+ []
+
+
+Overfull \hbox (24.75002pt too wide) in paragraph at lines 13--14
+\TU/lmr/bx/n/10 plex-
+ []
+
+
+Overfull \hbox (16.6pt too wide) in paragraph at lines 13--14
+\TU/lmr/bx/n/10 ity:
+ []
+
+
+Overfull \hbox (29.29445pt too wide) in paragraph at lines 13--14
+\OML/cmm/m/it/10 O\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 N[]\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (30.51pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 Chan-
+ []
+
+
+Overfull \hbox (14.85pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 nel
+ []
+
+
+Overfull \hbox (31.84001pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 Model
+ []
+
+
+Overfull \hbox (21.88pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 Sen-
+ []
+
+
+Overfull \hbox (11.56pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 si-
+ []
+
+
+Overfull \hbox (17.56001pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 tiv-
+ []
+
+
+Overfull \hbox (16.6pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 ity:
+ []
+
+
+Overfull \hbox (29.22pt too wide) in paragraph at lines 15--16
+\TU/lmr/bx/n/10 Static
+ []
+
+
+Overfull \hbox (17.92001pt too wide) in paragraph at lines 15--16
+\TU/lmr/bx/n/10 De-
+ []
+
+
+Overfull \hbox (12.13pt too wide) in paragraph at lines 15--16
+\TU/lmr/bx/n/10 ci-
+ []
+
+
+Overfull \hbox (19.87pt too wide) in paragraph at lines 15--16
+\TU/lmr/bx/n/10 sion
+ []
+
+
+Overfull \hbox (30.89pt too wide) in paragraph at lines 15--16
+\TU/lmr/bx/n/10 Rules:
+ []
+
+
+Overfull \hbox (21.88pt too wide) in paragraph at lines 16--17
+\TU/lmr/bx/n/10 Sep-
+ []
+
+
+Overfull \hbox (9.42pt too wide) in paragraph at lines 16--17
+\TU/lmr/bx/n/10 a-
+ []
+
+
+Overfull \hbox (20.07pt too wide) in paragraph at lines 16--17
+\TU/lmr/bx/n/10 rate
+ []
+
+
+Overfull \hbox (18.86pt too wide) in paragraph at lines 16--17
+\TU/lmr/bx/n/10 Op-
+ []
+
+
+Overfull \hbox (11.49pt too wide) in paragraph at lines 16--17
+\TU/lmr/bx/n/10 ti-
+ []
+
+
+Overfull \hbox (27.3pt too wide) in paragraph at lines 16--17
+\TU/lmr/bx/n/10 miza-
+ []
+
+
+Overfull \hbox (19.8pt too wide) in paragraph at lines 16--17
+\TU/lmr/bx/n/10 tion
+ []
+
+
+Overfull \hbox (35.2pt too wide) in paragraph at lines 16--17
+\TU/lmr/bx/n/10 Stages:
+ []
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 19--20
+[]These
+ []
+
+
+Overfull \hbox (22.23001pt too wide) in paragraph at lines 19--20
+\TU/lmr/m/it/10 data-
+ []
+
+
+Overfull \hbox (27.22002pt too wide) in paragraph at lines 19--20
+\TU/lmr/m/it/10 driven
+ []
+
+
+Overfull \hbox (25.18001pt too wide) in paragraph at lines 19--20
+\TU/lmr/m/it/10 learn-
+ []
+
+
+Overfull \hbox (13.29001pt too wide) in paragraph at lines 19--20
+\TU/lmr/m/it/10 ing
+ []
+
+! Undefined control sequence.
+l.21 \subsection
+              {Contributions}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 21--22
+[]Contributions 
+ []
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 23--24
+[]This
+ []
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 25--25
+[] 
+ []
+
+
+Overfull \hbox (17.73001pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 Re-
+ []
+
+
+Overfull \hbox (12.61pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 al-
+ []
+
+
+Overfull \hbox (11.56pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 is-
+ []
+
+
+Overfull \hbox (12.77pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 tic
+ []
+
+
+Overfull \hbox (30.51pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 Chan-
+ []
+
+
+Overfull \hbox (14.85pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 nel
+ []
+
+
+Overfull \hbox (27.21pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 Mod-
+ []
+
+
+Overfull \hbox (12.29001pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 el-
+ []
+
+
+Overfull \hbox (18.52pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 ing:
+ []
+
+
+Overfull \hbox (27.47pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 Com-
+ []
+
+
+Overfull \hbox (20.55pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 par-
+ []
+
+
+Overfull \hbox (9.42pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 a-
+ []
+
+
+Overfull \hbox (18.68001pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 tive
+ []
+
+
+Overfull \hbox (27.40999pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 Base-
+ []
+
+
+Overfull \hbox (18.04001pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 line
+ []
+
+
+Overfull \hbox (27.69pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 Anal-
+ []
+
+
+Overfull \hbox (9.90001pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 y-
+ []
+
+
+Overfull \hbox (15.45999pt too wide) in paragraph at lines 28--29
+\TU/lmr/bx/n/10 sis:
+ []
+
+
+Overfull \hbox (25.04002pt too wide) in paragraph at lines 30--31
+\TU/lmr/m/it/10 Static
+ []
+
+
+Overfull \hbox (22.76001pt too wide) in paragraph at lines 30--31
+\TU/lmr/m/it/10 Pair-
+ []
+
+
+Overfull \hbox (13.76001pt too wide) in paragraph at lines 30--31
+\TU/lmr/m/it/10 ing\nullfont :
+ []
+
+
+Overfull \hbox (18.29pt too wide) in paragraph at lines 31--32
+\TU/lmr/m/it/10 Bal-
+ []
+
+
+Overfull \hbox (24.02002pt too wide) in paragraph at lines 31--32
+\TU/lmr/m/it/10 anced
+ []
+
+
+Overfull \hbox (22.76001pt too wide) in paragraph at lines 31--32
+\TU/lmr/m/it/10 Pair-
+ []
+
+
+Overfull \hbox (13.76001pt too wide) in paragraph at lines 31--32
+\TU/lmr/m/it/10 ing\nullfont :
+ []
+
+
+Overfull \hbox (22.37999pt too wide) in paragraph at lines 32--33
+\TU/lmr/m/it/10 Blos-
+ []
+
+
+Overfull \hbox (17.37999pt too wide) in paragraph at lines 32--33
+\TU/lmr/m/it/10 som
+ []
+
+
+Overfull \hbox (30.69002pt too wide) in paragraph at lines 32--33
+\TU/lmr/m/it/10 Match-
+ []
+
+
+Overfull \hbox (13.76001pt too wide) in paragraph at lines 32--33
+\TU/lmr/m/it/10 ing\nullfont :
+ []
+
+
+Overfull \hbox (13.69pt too wide) in paragraph at lines 33--34
+\TU/lmr/m/it/10 Bi-
+ []
+
+
+Overfull \hbox (17.51001pt too wide) in paragraph at lines 33--34
+\TU/lmr/m/it/10 par-
+ []
+
+
+Overfull \hbox (14.31003pt too wide) in paragraph at lines 33--34
+\TU/lmr/m/it/10 tite
+ []
+
+
+Overfull \hbox (26.78001pt too wide) in paragraph at lines 33--34
+\TU/lmr/m/it/10 Graph
+ []
+
+
+Overfull \hbox (30.69002pt too wide) in paragraph at lines 33--34
+\TU/lmr/m/it/10 Match-
+ []
+
+
+Overfull \hbox (13.76001pt too wide) in paragraph at lines 33--34
+\TU/lmr/m/it/10 ing\nullfont :
+ []
+
+
+Overfull \hbox (32.15pt too wide) in paragraph at lines 36--37
+\TU/lmr/bx/n/10 Graph
+ []
+
+
+Overfull \hbox (24.49pt too wide) in paragraph at lines 36--37
+\TU/lmr/bx/n/10 Neu-
+ []
+
+
+Overfull \hbox (13.52pt too wide) in paragraph at lines 36--37
+\TU/lmr/bx/n/10 ral
+ []
+
+
+Overfull \hbox (22.57pt too wide) in paragraph at lines 36--37
+\TU/lmr/bx/n/10 Net-
+ []
+
+
+Overfull \hbox (24.55pt too wide) in paragraph at lines 36--37
+\TU/lmr/bx/n/10 work
+ []
+
+
+Overfull \hbox (35.29001pt too wide) in paragraph at lines 36--37
+\TU/lmr/bx/n/10 Frame-
+ []
+
+
+Overfull \hbox (27.74pt too wide) in paragraph at lines 36--37
+\TU/lmr/bx/n/10 work:
+ []
+
+
+Overfull \hbox (50.18323pt too wide) in paragraph at lines 42--43
+\OML/cmm/m/it/10 O\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 N [] N\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (24.17pt too wide) in paragraph at lines 45--46
+\TU/lmr/bx/n/10 End-
+ []
+
+
+Overfull \hbox (14.05pt too wide) in paragraph at lines 45--46
+\TU/lmr/bx/n/10 to-
+ []
+
+
+Overfull \hbox (20.34pt too wide) in paragraph at lines 45--46
+\TU/lmr/bx/n/10 End
+ []
+
+
+Overfull \hbox (32.74pt too wide) in paragraph at lines 45--46
+\TU/lmr/bx/n/10 Learn-
+ []
+
+
+Overfull \hbox (15.33pt too wide) in paragraph at lines 45--46
+\TU/lmr/bx/n/10 ing
+ []
+
+
+Overfull \hbox (44.26003pt too wide) in paragraph at lines 45--46
+\TU/lmr/bx/n/10 Pipeline:
+ []
+
+
+Overfull \hbox (27.47pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 Com-
+ []
+
+
+Overfull \hbox (20.23001pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 pre-
+ []
+
+
+Overfull \hbox (21.88pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 hen-
+ []
+
+
+Overfull \hbox (18.75pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 sive
+ []
+
+
+Overfull \hbox (21.38pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 Per-
+ []
+
+
+Overfull \hbox (17.83pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 for-
+ []
+
+
+Overfull \hbox (31.94pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 mance
+ []
+
+
+Overfull \hbox (25.6pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 Eval-
+ []
+
+
+Overfull \hbox (10.22pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 u-
+ []
+
+
+Overfull \hbox (9.42pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 a-
+ []
+
+
+Overfull \hbox (22.99pt too wide) in paragraph at lines 53--54
+\TU/lmr/bx/n/10 tion:
+ []
+
+
+Overfull \hbox (50.18323pt too wide) in paragraph at lines 57--58
+\OML/cmm/m/it/10 O\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 N [] N\OT1/cmr/m/n/10 )$
+ []
+
+! Undefined control sequence.
+l.62 \subsection
+              {Paper Organization}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 62--63
+[]Paper
+ []
+
+)
+! Emergency stop.
+<*> introduction.tex
+                 
+*** (job aborted, no legal \end found)
+
+
+
+Here is how much of LuaTeX's memory you used:
+ 32 strings out of 476497
+ 100000,1977958 words of node,token memory allocated 48980 words of node memory still in use:
+   257 hlist, 82 disc, 38 local_par, 1 dir, 3 math, 1240 glue, 48 kern, 190 pena
+lty, 4974 glyph, 235 attribute, 39 glue_spec, 235 attribute_list, 1 temp nodes
+   avail lists: 2:1,4:78,5:21,8:9,10:77
+ 22196 multiletter control sequences out of 65536+600000
+ 26 fonts using 1476743 bytes
+ 19i,2n,22p,812b,174s stack positions out of 10000i,1000n,20000p,200000b,200000s
+!  ==> Fatal error occurred, no output PDF file produced!

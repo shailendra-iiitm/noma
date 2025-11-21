@@ -1,0 +1,79 @@
+\section{Clustering Methodology}
+\label{sec:clustering}
+
+We evaluate four user-pairing methods for PD\mbox{-}NOMA: \emph{Static}, \emph{Balanced}, \emph{Blossom} (general maximum-weight matching), and \emph{Bipartite proportional-fair (PF)} matching.  
+All methods pre-enforce the SIC guard before admitting a pair; any unpaired users are served via OMA fallback.
+
+\subsection{Static Strong–Weak Pairing}
+Users are sorted in ascending order of $|h|$, then paired symmetrically:
+\[
+\mathcal{P}_{\text{static}}=\{(u_{(i)},u_{(N+1-i)})\mid i=1,\ldots,N/2\}.
+\]
+This ensures each weak user is coupled with a strong one, maximizing disparity for SIC feasibility.  
+As shown in Fig.~\ref{fig:static}, the static clustering pattern connects users at opposite ends of the channel-gain spectrum, producing long cross-cell links that emphasize strong–weak diversity.  
+While this approach maximizes channel disparity, it may lead to reduced fairness among mid-gain users.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{static_pairing.png}
+  \caption{Static clustering: long cross-cell edges reflect large gain disparity between paired users.}
+  \label{fig:static}
+\end{figure}
+
+\subsection{Balanced Pairing}
+To improve fairness, the sorted list is divided into two halves, pairing corresponding elements:
+\[
+\mathcal{P}_{\text{bal}}=\{(u_{(i)},u_{(i+N/2)})\mid i=1,\ldots,N/2\}.
+\]
+This configuration reduces excessive disparity between users while maintaining SIC feasibility.  
+As shown in Fig.~\ref{fig:balanced}, balanced clustering yields shorter, more localized connections compared to static pairing, leading to improved user-rate uniformity and fairer power allocation.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{balanced_pairing.png}
+  \caption{Balanced clustering: shorter intra-region edges moderate channel disparity and improve fairness.}
+  \label{fig:balanced}
+\end{figure}
+
+\subsection{Blossom Matching (General Graph)}
+A complete undirected graph is constructed where each vertex represents a user, and an edge $(i,j)$ exists if the pair satisfies the SIC condition.  
+Each edge is weighted by the achievable sum rate $w_{ij}=R_{\mathrm{sum}}(i,j)$, computed from the SINR model.  
+Edmonds' Blossom algorithm is then applied to determine the maximum-weight matching (MWM), ensuring global optimality with complexity $\mathcal{O}(N^3)$.  
+As illustrated in Fig.~\ref{fig:blossom}, the Blossom clustering method adaptively forms pairs with optimal rate contribution while maintaining SIC feasibility across the network.  
+Although it achieves the highest theoretical throughput, its computational cost grows rapidly with user density.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{blossom_pairing.png}
+  \caption{Blossom clustering: global optimum pairing on a general graph with the highest computational complexity.}
+  \label{fig:blossom}
+\end{figure}
+
+\subsection{Bipartite PF-Weighted Matching}
+The user set is partitioned into weak ($U_W$) and strong ($U_S$) groups, either by a fixed median threshold or adaptively based on channel spread.  
+Edges are allowed only across $(U_W,U_S)$ pairs that satisfy angular separation and SIC feasibility guards.  
+Each feasible edge is assigned a proportional-fair (PF) weight:
+\[
+w_{ij} = \log(R_i+\epsilon) + \log(R_j+\epsilon),
+\]
+where $R_i$ and $R_j$ are achievable rates from the SINR model, and $\epsilon$ is a small offset to avoid $\log(0)$.  
+The Hungarian or min-cost max-flow algorithm then produces an optimal bipartite matching in $\mathcal{O}(N^3)$ time.  
+As shown in Fig.~\ref{fig:bipartite_pf}, the PF-weighted bipartite approach aligns naturally with the SIC structure of NOMA by pairing spatially separated weak–strong users, thereby achieving an excellent balance between fairness and total throughput.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{bipartite_pf_pairing.png}
+  \caption{Bipartite PF clustering: aligns with NOMA SIC structure, offering high throughput and fairness with moderate complexity.}
+  \label{fig:bipartite_pf}
+\end{figure}
+
+\subsection{OMA Fill and Throughput Accounting}
+After matching, any unpaired users are served via orthogonal multiple access (OMA) on remaining sub-bands.  
+Let $\mathcal{P}$ denote the set of NOMA pairs and $\mathcal{U}_{\text{OMA}}$ the set of unpaired users.  
+Each user’s throughput is
+\[
+T = R \cdot \frac{B_{\text{unit}}}{10^6}, \qquad 
+B_{\text{unit}} = \frac{B}{|\mathcal{P}| + |\mathcal{U}_{\text{OMA}}|},
+\]
+where $R$ is the user’s instantaneous rate (in bps/Hz) and $B_{\text{unit}}$ is the allocated bandwidth share.  
+This ensures consistent accounting of aggregate system throughput across both NOMA and OMA users.

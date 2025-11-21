@@ -11,6 +11,7 @@ Usage:
     python run.py --help             # Show help
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -63,13 +64,19 @@ def main():
         
         input_file = sys.argv[2]
         print(f"\n🔮 Running inference on {input_file}...")
+        
+        # Set PYTHONPATH to include the project root
+        env = os.environ.copy()
+        project_root = str(Path(__file__).parent)
+        env['PYTHONPATH'] = project_root + os.pathsep + env.get('PYTHONPATH', '')
+        
         subprocess.run([
             sys.executable,
             "inference/infer_pairing.py",
-            "--h-values", input_file,
+            "--h_values_csv", input_file,
             "--ckpt", "checkpoints/best_model.pt",
             "--scaler", "data/processed/feature_scaler.json"
-        ])
+        ], env=env, cwd=project_root)
     
     elif command == "prepare":
         print("\n📦 Preparing training data...")
@@ -81,11 +88,9 @@ def main():
     elif command == "show":
         print("\n📈 Showing last comparison results...")
         # Change to comparison directory first
-        import os
         original_dir = Path.cwd()
-        os.chdir("comparison")
-        subprocess.run([sys.executable, "show_results.py"])
-        os.chdir(original_dir)
+        comparison_dir = Path(__file__).parent / "comparison"
+        subprocess.run([sys.executable, "show_results.py"], cwd=str(comparison_dir))
     
     elif command in ["help", "-h", "--help"]:
         print_menu()

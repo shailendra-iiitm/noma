@@ -1,0 +1,53 @@
+\section{Conclusion and Future Work}
+
+\subsection{Summary of Contributions}
+
+This work presented a comprehensive framework for user pairing in Power-Domain NOMA systems, combining theoretical optimization methods with modern deep learning techniques. We generated realistic channel state information using the standardized 3GPP TR 38.901 Urban Macro model and systematically evaluated four traditional clustering strategies alongside a novel Graph Neural Network approach.
+
+This work makes four principal contributions:
+
+\begin{enumerate}
+    \item \textbf{Realistic Evaluation Framework:} Generated 200 diverse deployment scenarios using standardized 3GPP TR 38.901 Urban Macro channels with N=500 users per scenario (100,000 total training samples). Comprehensive baseline comparison across 4 traditional methods shows Bipartite PF achieves optimal throughput but with prohibitive $O(N^3)$ computational complexity.
+    
+    \item \textbf{Novel GNN Architecture:} GraphSAGE-based model with physical constraint-aware graph construction learns user pairing patterns from training data. Achieves $O(N \log N)$ inference complexity with lightweight architecture (166K parameters, 650 KB footprint) suitable for edge deployment.
+    
+    \item \textbf{Near-Optimal Real-Time Performance:} Achieves 96.5\% of optimal throughput (636.15 Mbps vs 659.07 Mbps) with 40.4× speedup (752 ms vs 30.4 s) compared to Blossom matching on N=500 scenarios. The $O(N \log N)$ complexity enables practical deployment for networks with 500+ users per cell.
+    
+    \item \textbf{Validated Scalability:} Tested across user densities from 500 to 2000, NOMA-GNN consistently maintains 95.7-96.5\% throughput while speedup advantage grows dramatically: 28.1× → 64.0× → 114.4× vs Bipartite matching. Runtime remains practical even at N=2000 (16.1 s) while Bipartite requires 30.7 minutes, demonstrating superiority for dense deployments.
+\end{enumerate}
+
+\subsection{Practical Implications}
+
+The results have several important implications for next-generation wireless networks:
+
+\begin{itemize}
+    \item \textbf{Scalability:} NOMA-GNN's computational efficiency enables NOMA deployment in dense urban scenarios with hundreds to thousands of users per cell, previously impractical with optimization methods. The growing speedup advantage at higher densities (114.4× at N=2000) confirms the value proposition increases with network density.
+    
+    \item \textbf{Real-Time Operation:} Sub-second to few-second inference latency (752 ms for N=500, 16.1 s for N=2000) enables practical deployment for semi-static scheduling in real networks across a wide range of densities.
+    
+    \item \textbf{Quality of Service:} Consistent near-optimal throughput (95.7-96.5\%) across all densities ensures good performance across all users while maintaining computational efficiency.
+    
+    \item \textbf{Edge Intelligence:} The lightweight model (~166K parameters, 650 KB) can be deployed on base station edge computing platforms, enabling distributed real-time optimization without cloud dependency.
+```
+\end{itemize}
+
+\subsection{Future Research Directions}
+
+While NOMA-GNN demonstrates strong performance, several research directions warrant further investigation:
+
+\begin{enumerate}
+    \item \textbf{Imperfect CSI and Mobility:} Current work assumes perfect channel knowledge. Extension to realistic channel estimation errors (3-5 dB typical in FDD systems) and incorporation of temporal GNNs for high-Doppler scenarios would enhance practical applicability.
+    
+    \item \textbf{Multi-Cell Coordination:} Single-cell operation limits deployment scope. Future work should explore federated learning approaches for distributed base station coordination, addressing inter-cell interference without centralized CSI aggregation.
+    
+    \item \textbf{Hybrid NOMA-OMA Mode Selection:} Integration of joint mode selection policies could determine optimal conditions for NOMA pairing versus orthogonal resource allocation, accounting for imperfect SIC and error propagation effects.
+    
+    \item \textbf{Self-Supervised Learning:} Reducing dependency on computationally expensive optimal matching labels through self-supervised objectives derived from NOMA rate expressions could enable online adaptation to evolving channel conditions.
+\end{enumerate}
+
+\subsection{Concluding Remarks}
+
+This work demonstrates that Graph Neural Networks can effectively address the user pairing challenge in NOMA systems, achieving near-optimal throughput with real-time computational efficiency. The NOMA-GNN framework combines rigorous graph-theoretic foundations with modern deep learning to learn pairing strategies from data rather than relying solely on hand-crafted heuristics.
+
+Our results establish GNN-based resource allocation as a viable approach for next-generation wireless networks. As cellular systems continue to densify and user populations become more heterogeneous, such data-driven optimization techniques will be increasingly essential for realizing the full potential of advanced multiple access technologies in 5G and beyond.
+

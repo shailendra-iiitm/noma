@@ -1,0 +1,77 @@
+% Inference Pipeline Flow
+\begin{tikzpicture}[
+    box/.style={rectangle, draw=black!80, thick, minimum width=28mm, minimum height=10mm, font=\footnotesize, align=center},
+    data/.style={box, fill=blue!20},
+    process/.style={box, fill=orange!20},
+    output/.style={box, fill=green!20},
+    decision/.style={diamond, draw=black!80, thick, fill=yellow!20, minimum size=12mm, font=\tiny, align=center, aspect=2},
+    arrow/.style={->, >=stealth, thick},
+    scale=0.88, every node/.style={scale=0.88}
+]
+
+% Column 1: Input
+\node[data] (csi) at (0, 0) {Channel State\\Information\\$\{h_i, d_i, \theta_i\}$};
+
+\node[process, below=10mm of csi] (graph) {Graph\\Construction\\$\mathcal{G}(\mathcal{V}, \mathcal{E})$};
+
+\draw[arrow] (csi) -- (graph);
+
+% Column 2: GNN Processing
+\node[process, below=10mm of graph] (gnn) {GNN Forward\\Pass\\(GraphSAGE)};
+
+\draw[arrow] (graph) -- node[right, font=\tiny] {$\mathbf{X}, \mathcal{E}$} (gnn);
+
+\node[data, below=10mm of gnn] (embed) {Node\\Embeddings\\$\{\mathbf{h}_i\}_{i=1}^N$};
+
+\draw[arrow] (gnn) -- (embed);
+
+% Column 3: Scoring
+\node[process, below=10mm of embed] (score) {Edge Scoring\\$\forall (i,j) \in \mathcal{E}$};
+
+\draw[arrow] (embed) -- (score);
+
+\node[data, below=10mm of score] (scores) {Pairing Scores\\$\{p_{ij}, \hat{r}_{ij}, \hat{\alpha}_{ij}\}$};
+
+\draw[arrow] (score) -- (scores);
+
+% Column 4: Filtering
+\node[decision, below=15mm of scores] (filter) {SIC\\Valid?};
+
+\draw[arrow] (scores) -- (filter);
+
+\node[data, left=8mm of filter] (discard) {Discard};
+\node[process, right=8mm of filter] (keep) {Candidate\\Set $\mathcal{E}'$};
+
+\draw[arrow] (filter) -- node[above, font=\tiny] {No} (discard);
+\draw[arrow] (filter) -- node[above, font=\tiny] {Yes} (keep);
+
+% Column 5: Matching
+\node[process, below=12mm of filter] (greedy) {Greedy\\Matching\\(Sort by $p_{ij}$)};
+
+\draw[arrow] (keep) |- (greedy);
+
+\node[output, below=10mm of greedy] (pairs) {Final Pairs\\$\mathcal{M}^*$};
+
+\draw[arrow] (greedy) -- (pairs);
+
+% Timing annotations
+\node[font=\tiny, gray, right=2mm of graph] {$O(N^2)$};
+\node[font=\tiny, gray, right=2mm of gnn] {$O(E \cdot D)$};
+\node[font=\tiny, gray, right= 20mm of greedy] {$O(E \log E)$};
+
+% Overall complexity
+\node[draw, thick, fill=cyan!10, rectangle, text width=28mm, font=\tiny, align=center] at (4, -8) {
+\textbf{Total Complexity:}\\
+$O(N \log N)$\\[1mm]
+\textbf{Runtime (N=500):}\\
+752 ms
+};
+
+% Side annotations for clarity
+\node[font=\footnotesize\bfseries, left=15mm of csi, rotate=90, anchor=south] {Input};
+\node[font=\footnotesize\bfseries, left=15mm of gnn, rotate=90, anchor=south] {Encoding};
+\node[font=\footnotesize\bfseries, left=15mm of score, rotate=90, anchor=south] {Scoring};
+\node[font=\footnotesize\bfseries, left=15mm of greedy, rotate=90, anchor=south] {Matching};
+\node[font=\footnotesize\bfseries, left=15mm of pairs, rotate=90, anchor=south] {Output};
+
+\end{tikzpicture}

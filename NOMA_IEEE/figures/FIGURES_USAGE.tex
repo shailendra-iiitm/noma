@@ -1,0 +1,94 @@
+% ========================================
+% NOMA-GNN Paper Figures - INTEGRATED INTO main.tex
+% All 5 TikZ figures have been added to the IEEE paper
+% ========================================
+
+% Figure locations in main.tex:
+% 1. graph_construction.tex - After "Problem Reformulation as Graph Learning" (Section III.A)
+% 2. gnn_architecture.tex - After describing multi-task decoder heads (Section III.B)
+% 3. graphsage_detail.tex - After explaining MEAN aggregator (Section III.B.1)
+% 4. inference_pipeline.tex - After inference complexity discussion (Section III.E)
+% 5. training_inference_comparison.tex - After training details (Section III.D)
+
+% ========================================
+% NOMA-GNN Paper Figures - Usage Guide
+% Place these in your LaTeX document where appropriate
+
+% ========================================
+% Figure 1: GNN Architecture Overview
+% Best location: Section III (GNN Methodology)
+% ========================================
+\begin{figure}[t]
+\centering
+\input{figures/gnn_architecture.tex}
+\caption{NOMA-GNN architecture: GraphSAGE encoder with multi-task decoders. Node features include channel gain $|h_i|^2$, distance $d_i$, angular position $\theta_i$, and SNR. Three GraphSAGE layers produce 128-dimensional embeddings, which are concatenated pairwise and fed to three task-specific MLPs for pairing classification, sum-rate regression, and power allocation.}
+\label{fig:gnn_architecture}
+\end{figure}
+
+% ========================================
+% Figure 2: Graph Construction Process
+% Best location: Section III.A (Problem Reformulation)
+% ========================================
+\begin{figure}[t]
+\centering
+\input{figures/graph_construction.tex}
+\caption{Graph construction from channel state information. Users with feasible NOMA pairing (satisfying SIC threshold, angular separation, and channel gain ordering) are connected by edges. The resulting graph $\mathcal{G}(\mathcal{V}, \mathcal{E})$ captures physical constraints and serves as input to the GNN.}
+\label{fig:graph_construction}
+\end{figure}
+
+% ========================================
+% Figure 3: Inference Pipeline
+% Best location: Section III.E (Inference and Greedy Matching)
+% ========================================
+\begin{figure}[t]
+\centering
+\input{figures/inference_pipeline.tex}
+\caption{Real-time inference pipeline. Given new CSI, the system constructs a graph, performs GNN forward pass, scores candidate pairs, filters by SIC constraints, and executes greedy matching. Total complexity is $O(N \log N)$ with 752 ms runtime for N=500 users.}
+\label{fig:inference_pipeline}
+\end{figure}
+
+% ========================================
+% Figure 4: GraphSAGE Message Passing
+% Best location: Section III.B (GraphSAGE Encoder)
+% ========================================
+\begin{figure}[t]
+\centering
+\input{figures/graphsage_detail.tex}
+\caption{GraphSAGE message passing mechanism. At each layer $\ell$, node $u_i$ aggregates features from neighbors $\mathcal{N}(i)$ using MEAN aggregation, concatenates with its own features, and applies a learnable transformation. Three layers enable each node to incorporate 3-hop neighborhood information.}
+\label{fig:graphsage_detail}
+\end{figure}
+
+% ========================================
+% Figure 5: Training vs Inference Comparison
+% Best location: Section IV (Results) or Section III.E
+% ========================================
+\begin{figure}[t]
+\centering
+\input{figures/training_inference_comparison.tex}
+\caption{Training versus inference phases. During training, expensive Blossom matching generates ground-truth labels for 200 scenarios. At inference, the trained GNN processes new CSI snapshots in 752 ms (40.4× speedup), demonstrating the value of learning-based optimization.}
+\label{fig:training_inference}
+\end{figure}
+
+% ========================================
+% REQUIRED PACKAGES
+% Add to your preamble:
+% ========================================
+% \usepackage{tikz}
+% \usetikzlibrary{shapes, arrows, positioning, calc, shapes.geometric}
+
+% ========================================
+% NOTES:
+% ========================================
+% 1. All figures use TikZ - ensure tikz package is loaded
+% 2. Figures are designed for IEEE double-column format
+% 3. Adjust scale parameter in each .tex file if needed
+% 4. Colors are printer-friendly (tested in grayscale)
+% 5. Font sizes are optimized for IEEE column width
+
+% ========================================
+% CUSTOMIZATION:
+% ========================================
+% - To change colors: modify fill=color!XX in each .tex file
+% - To adjust size: change scale=X.XX parameter
+% - To modify complexity: edit gray annotations
+% - To change fonts: modify font=\footnotesize styles

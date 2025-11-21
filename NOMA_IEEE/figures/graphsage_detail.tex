@@ -1,0 +1,123 @@
+% GraphSAGE Message Passing Illustration
+\begin{tikzpicture}[
+    >=stealth,
+    arrow/.style={->,thick},
+    message/.style={->,thick,dashed,orange!80},
+    node/.style={circle,draw=black!80,fill=blue!25,thick,minimum size=12mm,font=\footnotesize},
+    neighbor/.style={circle,draw=black!80,fill=gray!15,thick,minimum size=11mm,font=\footnotesize},
+    feature/.style={rectangle,draw=black!70,fill=green!15,minimum width=19mm,minimum height=7mm,font=\scriptsize},
+    every node/.style={transform shape},
+    scale=0.95
+]
+
+%--------------------------------------------------------------------
+% Left: layer \ell=0, local neighborhood
+%--------------------------------------------------------------------
+\node[font=\large\bfseries] at (-2.8,3.2) {Layer $\ell = 0$};
+
+\node[node]     (u0) at (0,1.8) {$u_i$};
+\node[neighbor] (n1) at (-2,0.5) {$u_1$};
+\node[neighbor] (n2) at (0,0.1)   {$u_2$};
+\node[neighbor] (n3) at ( 2,0.5) {$u_3$};
+
+\node[feature,below=18mm of u0] (f0) {$\mathbf{h}_i^{(0)}$};
+\node[feature,below=3mm of n1] (f1) {$\mathbf{h}_1^{(0)}$};
+\node[feature,below=11mm of n2] (f2) {$\mathbf{h}_2^{(0)}$};
+\node[feature,below=1.5mm of n3] (f3) {$\mathbf{h}_3^{(0)}$};
+
+% Edges in the original graph
+\draw[thick,gray] (u0) -- (n1);
+\draw[thick,gray] (u0) -- (n2);
+\draw[thick,gray] (u0) -- (n3);
+
+\node[font=\scriptsize,gray] at (1.4,2.4) {$\mathcal{N}(u_i)$};
+
+%--------------------------------------------------------------------
+% Middle: aggregation block
+%--------------------------------------------------------------------
+\begin{scope}[xshift=6.2cm]
+  \node[font=\large\bfseries] at (0,3.2) {Aggregation};
+
+  \node[draw,thick,fill=yellow!15,
+        rectangle,
+        minimum width=40mm,
+        minimum height=15mm,
+        font=\scriptsize,
+        align=center,
+        text width=42mm] (agg) at (0,1.2) {%
+        \textbf{MEAN}\\[1mm]
+        $\displaystyle \mathbf{m}_i^{(\ell)}
+        = \frac{1}{|\mathcal{N}(i)|}
+          \sum_{j\in\mathcal{N}(i)} \mathbf{h}_j^{(\ell-1)}$};
+
+  % incoming neighbor messages
+  \draw[message] (f1.east) to[bend left=18] (agg.west);
+  \draw[message] (f2.east) to[bend left=6]  (agg.west);
+  \draw[message] (f3.east) to[bend right=18] (agg.south west);
+
+  \node[font=\scriptsize,text=orange!80] at (0,2.4) {Neighbor messages};
+\end{scope}
+
+%--------------------------------------------------------------------
+% Right: update block
+%--------------------------------------------------------------------
+\begin{scope}[xshift=12.2cm]
+  \node[font=\large\bfseries] at (0,3.2) {Update};
+
+  \node[draw,thick,fill=cyan!18,
+        rectangle,
+        minimum width=42mm,
+        minimum height=19mm,
+        font=\scriptsize,
+        align=center,
+        text width=44mm] (update) at (0,1.0) {%
+        \textbf{Concatenate:}\\[1mm]
+        $[\mathbf{h}_i^{(\ell-1)} \,\|\, \mathbf{m}_i^{(\ell)}]$\\[2mm]
+        \textbf{Transform:}\\[1mm]
+        $\mathbf{h}_i^{(\ell)}
+          = \sigma\!\bigl(\mathbf{W}^{(\ell)} [\cdot]
+          + \mathbf{b}^{(\ell)}\bigr)$};
+
+  % self feature and aggregated message to update
+  \draw[arrow] (f0.east) to[bend right=25]
+      node[midway,above,font=\scriptsize] {self} (update.west);
+  \draw[arrow] (agg.east) -- (update.west);
+\end{scope}
+
+%--------------------------------------------------------------------
+% Output embedding
+%--------------------------------------------------------------------
+\begin{scope}[xshift=12.2cm,yshift=-3.1cm]
+  \node[feature,fill=purple!25,minimum width=22mm,minimum height=8mm,font=\scriptsize]
+        (out) at (0,0) {$\mathbf{h}_i^{(\ell)}$};
+  \draw[arrow,ultra thick] (update.south) -- (out.north);
+
+  \node[font=\scriptsize,below=2mm of out] {Updated embedding};
+\end{scope}
+
+%--------------------------------------------------------------------
+% Horizontal process-flow labels
+%--------------------------------------------------------------------
+\draw[->,ultra thick,gray!50]
+      (-2.8,-2.8) -- (4.2,-2.8)
+      node[midway,below=1mm,font=\small] {Message Passing};
+
+\draw[->,ultra thick,gray!50]
+      (6.0,-1.6) -- (11.5,-1.6)
+      node[midway,below=1mm,font=\small] {Feature Update};
+
+%--------------------------------------------------------------------
+% Iteration note box
+%--------------------------------------------------------------------
+\node[draw,thick,fill=orange!8,
+      rectangle,
+      text width=60mm,
+      font=\scriptsize,
+      align=left] at (5.8,-3.7) {%
+  \textbf{Repeat for $L = 3$ layers:}\\
+  $\bullet$ Each layer aggregates from 1-hop neighbors\\
+  $\bullet$ Layer 3 captures 3-hop neighborhood\\
+  $\bullet$ Hidden dimension: 128
+};
+
+\end{tikzpicture}

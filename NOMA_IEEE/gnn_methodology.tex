@@ -1,0 +1,142 @@
+\section{Graph Neural Network Methodology}
+\label{sec:gnn_methodology}
+
+Classical optimization methods such as Blossom and bipartite matching provide high-quality user pairing solutions for PD–NOMA but remain computationally expensive for large $N$. In this section, we reformulate the pairing problem as a graph representation learning task and develop NOMA-GNN, a GraphSAGE-based multi-task model that approximates optimal pairing, sum-rate, and power allocation with $O(N \log N)$ inference complexity.
+
+\subsection{Problem Reformulation as Graph Learning}
+
+We construct, for each snapshot of the cell, an undirected graph
+$\mathcal{G} = (\mathcal{V}, \mathcal{E})$ where nodes represent users and edges represent feasible NOMA pairs.
+
+\subsubsection{Node Features}
+
+Each user $i \in \mathcal{U}$ corresponds to a node $v_i \in \mathcal{V}$ with feature vector
+\begin{equation}
+\mathbf{x}_i = 
+\big[\, |h_i|^2,\ d_i,\ \theta_i,\ \text{SNR}_i \,\big]^\top,
+\end{equation}
+where $|h_i|^2$ is the channel power gain, $d_i$ is the BS–UE distance, $\theta_i$ is the angular position, and $\text{SNR}_i$ is the single-user SNR on the PRB. All features are normalized across the graph.
+
+\subsubsection{Edge Set and Labels}
+
+An undirected edge $(i,j) \in \mathcal{E}$ is created only if the pair satisfies the physical constraints defined in Section~\ref{sec:system_model}:
+(i) SIC feasibility, i.e., the channel-gain ratio exceeds the SIC threshold,
+(ii) minimum angular separation $|\theta_i - \theta_j| \ge 25^\circ$, and
+(iii) $|h_i|^2 < |h_j|^2$ to enforce weak–strong ordering.
+
+For each feasible pair $(i,j)$, we compute:
+\begin{itemize}
+    \item a binary label $y_{ij}^{\text{pair}} \in \{0,1\}$ indicating whether $(i,j)$ is selected in the optimal matching obtained from Blossom;
+    \item a continuous label $y_{ij}^{\text{rate}}$ equal to the optimal sum-rate $R_{\text{sum}}^\star(i,j)$ under joint matching and power allocation;
+    \item a continuous label $y_{ij}^{\alpha}$ equal to the optimal power split $\alpha^\star_{ij} \in (0.5,1)$.
+\end{itemize}
+These labels are used to supervise the multi-task training of NOMA-GNN.
+
+\subsection{GraphSAGE Encoder}
+
+We adopt GraphSAGE as the backbone encoder due to its inductive capability and scalability. Let $\mathbf{h}_i^{(0)} = \mathbf{x}_i$ denote the input feature of node $i$. At layer $\ell \in \{1,\dots,L\}$, we compute:
+\begin{equation}
+\mathbf{m}_i^{(\ell)} = 
+\frac{1}{|\mathcal{N}(i)|} 
+\sum_{j \in \mathcal{N}(i)} \mathbf{h}_j^{(\ell-1)},
+\end{equation}
+\begin{equation}
+\mathbf{h}_i^{(\ell)} =
+\sigma\!\left(
+\mathbf{W}^{(\ell)} 
+\big[ \mathbf{h}_i^{(\ell-1)} \,\|\, \mathbf{m}_i^{(\ell)} \big]
++ \mathbf{b}^{(\ell)}
+\right),
+\end{equation}
+where $\mathcal{N}(i)$ is the neighbor set of node $i$, $\|\,$ denotes concatenation, $\mathbf{W}^{(\ell)}$ and $\mathbf{b}^{(\ell)}$ are trainable parameters, and $\sigma(\cdot)$ is a ReLU activation. We use three GraphSAGE layers ($L=3$) with hidden dimension 128 and dropout between layers. The final node embedding is $\mathbf{h}_i = \mathbf{h}_i^{(3)}$.
+
+The MEAN aggregator offers a good trade-off between stability and complexity and, with $L=3$, allows each node to incorporate information from up to three hops, capturing broader interference structure.
+
+\subsection{Multi-Task Edge Decoders}
+
+For each candidate edge $(i,j) \in \mathcal{E}$, we form an edge embedding by concatenating the node embeddings:
+\begin{equation}
+\mathbf{e}_{ij} = 
+\big[\, \mathbf{h}_i \,\|\, \mathbf{h}_j \,\big] 
+\in \mathbb{R}^{2d},
+\end{equation}
+where $d$ is the node-embedding dimension. This edge representation is fed into three task-specific multilayer perceptrons (MLPs).
+
+\subsubsection{Pairing Classification Head}
+
+The pairing classifier predicts the probability that $(i,j)$ belongs to the optimal matching:
+\begin{equation}
+p_{ij} = \sigma\!\left(
+\mathrm{MLP}_{\text{pair}}(\mathbf{e}_{ij})
+\right),
+\end{equation}
+where $\sigma(\cdot)$ is the logistic sigmoid. The associated loss is the binary cross-entropy
+\begin{equation}
+\mathcal{L}_{\text{pair}} =
+- \frac{1}{|\mathcal{E}|}
+\sum_{(i,j)\in\mathcal{E}}
+\Big[
+y_{ij}^{\text{pair}} \log p_{ij}
++ (1-y_{ij}^{\text{pair}})\log(1-p_{ij})
+\Big].
+\end{equation}
+
+\subsubsection{Sum-Rate Regression Head}
+
+The rate head predicts the achievable sum-rate for pair $(i,j)$:
+\begin{equation}
+\hat{r}_{ij} = 
+\mathrm{MLP}_{\text{rate}}(\mathbf{e}_{ij}),
+\end{equation}
+with regression loss
+\begin{equation}
+\mathcal{L}_{\text{rate}} =
+\frac{1}{|\mathcal{E}|}
+\sum_{(i,j)\in\mathcal{E}}
+\big(\hat{r}_{ij} - y_{ij}^{\text{rate}}\big)^2.
+\end{equation}
+
+\subsubsection{Power-Allocation Regression Head}
+
+Finally, the power head predicts the power-split coefficient:
+\begin{equation}
+\hat{\alpha}_{ij} =
+\mathrm{sigmoid}\!\left(
+\mathrm{MLP}_{\text{power}}(\mathbf{e}_{ij})
+\right),
+\end{equation}
+which is then rescaled to $(0.5,1)$ to reflect weak–strong allocation. The corresponding loss is
+\begin{equation}
+\mathcal{L}_{\alpha} =
+\frac{1}{|\mathcal{E}|}
+\sum_{(i,j)\in\mathcal{E}}
+\big(\hat{\alpha}_{ij} - y_{ij}^{\alpha}\big)^2.
+\end{equation}
+
+\subsection{Training Objective and Optimization}
+
+The overall multi-task loss combines the three components:
+\begin{equation}
+\mathcal{L} =
+\lambda_{\text{pair}} \mathcal{L}_{\text{pair}} +
+\lambda_{\text{rate}} \mathcal{L}_{\text{rate}} +
+\lambda_{\alpha} \mathcal{L}_{\alpha},
+\end{equation}
+where $\lambda_{\text{pair}}, \lambda_{\text{rate}}, \lambda_{\alpha} > 0$ control the relative importance of each task. In our experiments, we select these weights empirically to balance convergence speed and final accuracy. The model is trained using the Adam optimizer with mini-batch sampling over graphs.
+
+\subsection{Inference and Greedy Matching}
+
+At inference time, the trained NOMA-GNN is used as follows:
+
+\begin{enumerate}
+    \item Construct the graph $\mathcal{G}$ for the current snapshot using the same rules as in training.
+    \item Compute node embeddings $\mathbf{h}_i$ and pairing scores $p_{ij}$ for all $(i,j)\in\mathcal{E}$.
+    \item Form a candidate edge list $\mathcal{E}'$ by discarding edges whose predicted power split $\hat{\alpha}_{ij}$ or implied SINR violates SIC or rate constraints.
+    \item Sort $\mathcal{E}'$ in descending order of a composite score (e.g., $p_{ij}$ or $p_{ij} \cdot \hat{r}_{ij}$) and perform greedy matching: iteratively select the highest-scoring edge that does not conflict with already selected pairs.
+\end{enumerate}
+
+If $E' = |\mathcal{E}'|$, the greedy procedure has complexity $O(E' \log E')$ due to the sorting step; in our setting, $E' = O(N)$, giving an overall $O(N \log N)$ complexity. This represents a substantial reduction compared to the $O(N^3)$ scaling of exact graph-matching methods while retaining most of their throughput.
+
+\subsection{Model Interpretability}
+
+To understand learned representations, we analyzed node embeddings using t-SNE visualization. Key observations: (1) Nodes naturally cluster by channel gain magnitude, with weak and strong users forming distinct regions; (2) Optimal pairs have embeddings with similar angular components but different magnitude components, suggesting the model learns strong-weak complementarity; (3) Predicted pairing scores show strong alignment with Blossom optimal pairs (correlation $> 0.92$), indicating effective learning of pairing patterns. These visualizations confirm the GNN captures physically meaningful pairing strategies \cite{shen2021graph}.
